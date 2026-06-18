@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 
+// ─── ADMIN & ACESSO ───────────────────────────────────────────────────────────
+const ADMIN_EMAIL = "ndhub186@gmail.com";
+
 // ─── CORES ──────────────────────────────────────────────────────────────────
 const C = {
   bg: "#FAF7F2",
@@ -361,11 +364,54 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState(Object.keys(SHOPPING_LIST)[0]);
   const [splashFade, setSplashFade] = useState(false);
 
+  // ── Auth & Acesso ──
+  const [currentUser, setCurrentUser] = useStorage("pv_user", null);
+  const [accessList, setAccessList] = useStorage("pv_access", [ADMIN_EMAIL]);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  const isAdmin = currentUser === ADMIN_EMAIL;
+
+  function handleLogin(email) {
+    const norm = email.toLowerCase().trim();
+    // Garante que o admin sempre está na lista
+    const list = accessList.includes(ADMIN_EMAIL) ? accessList : [ADMIN_EMAIL, ...accessList];
+    if (list.includes(norm)) {
+      setCurrentUser(norm);
+    } else {
+      return false; // acesso negado
+    }
+    return true;
+  }
+
+  function handleLogout() {
+    setScreen("splash");
+    setSplashFade(false);
+    setTimeout(() => setCurrentUser(null), 50);
+  }
+
+  function addAccess(email) {
+    const norm = email.toLowerCase().trim();
+    if (norm && !accessList.includes(norm)) {
+      setAccessList([...accessList, norm]);
+    }
+  }
+
+  function removeAccess(email) {
+    if (email === ADMIN_EMAIL) return; // nunca remove o admin
+    setAccessList(accessList.filter(e => e !== email));
+  }
+
   useEffect(() => {
+    if (!currentUser) return;
     const t = setTimeout(() => setSplashFade(true), 2200);
     const t2 = setTimeout(() => setScreen("main"), 2800);
     return () => { clearTimeout(t); clearTimeout(t2); };
-  }, []);
+  }, [currentUser]);
+
+  // Se não está logado, mostra tela de login
+  if (!currentUser) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   function toggleEx(day, exId) {
     const key = `${day}-${exId}`;
@@ -391,13 +437,14 @@ export default function App() {
       {showFoodList && <FoodListModal onClose={() => setShowFoodList(false)} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />}
       {expandedMeal && <MealDetailModal meal={expandedMeal} dayKey={selectedDay} mealType={expandedMeal._type} completed={completedMeals[`${selectedDay}-${expandedMeal._type}`]} onToggle={() => { toggleMeal(selectedDay, expandedMeal._type); setExpandedMeal(null); }} onClose={() => setExpandedMeal(null)} />}
       {expandedEx && <ExerciseDetailModal ex={EXERCISES[expandedEx]} dayKey={selectedDay} completed={completedEx[`${selectedDay}-${expandedEx}`]} onToggle={() => { toggleEx(selectedDay, expandedEx); setExpandedEx(null); }} onClose={() => setExpandedEx(null)} />}
+      {showAdminPanel && isAdmin && <AdminPanelModal accessList={accessList} onAdd={addAccess} onRemove={removeAccess} onClose={() => setShowAdminPanel(false)} />}
 
       {/* CONTEÚDO POR ABA */}
       {tab === "plano" && <TabPlano selectedDay={selectedDay} setSelectedDay={setSelectedDay} completedEx={completedEx} completedMeals={completedMeals} totalCompletedDays={totalCompletedDays} onGoWorkout={() => setTab("treinos")} onGoFood={() => setTab("comidas")} />}
       {tab === "treinos" && <TabTreinos dayData={dayData} selectedDay={selectedDay} completedEx={completedEx} onToggleEx={toggleEx} onExpandEx={setExpandedEx} />}
       {tab === "comidas" && <TabComidas dayData={dayData} selectedDay={selectedDay} completedMeals={completedMeals} onToggleMeal={toggleMeal} onExpandMeal={(meal, type) => setExpandedMeal({ ...meal, _type: type })} onShowFoodList={() => setShowFoodList(true)} />}
       {tab === "progresso" && <TabProgresso completedEx={completedEx} completedMeals={completedMeals} totalCompletedDays={totalCompletedDays} />}
-      {tab === "perfil" && <TabPerfil />}
+      {tab === "perfil" && <TabPerfil currentUser={currentUser} isAdmin={isAdmin} onLogout={handleLogout} onOpenAdmin={() => setShowAdminPanel(true)} />}
 
       {/* BARRA DE NAVEGAÇÃO */}
       <BottomNav tab={tab} setTab={setTab} />
@@ -759,17 +806,32 @@ function TabProgresso({ completedEx, completedMeals, totalCompletedDays }) {
 }
 
 // ─── ABA: PERFIL ──────────────────────────────────────────────────────────────
-function TabPerfil() {
+function TabPerfil({ currentUser, isAdmin, onLogout, onOpenAdmin }) {
   return (
     <div style={{ padding: "20px 16px 10px" }}>
       <h2 style={{ margin: "0 0 20px", fontSize: 26, fontWeight: 800, color: C.text }}>Perfil</h2>
 
-      {/* Avatar */}
+      {/* Avatar + usuário */}
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={{ width: 88, height: 88, borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}, #8B5E2A)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 40 }}>🧘‍♀️</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>Bem-vinda!</div>
-        <div style={{ fontSize: 14, color: C.textMuted }}>Pilates em Casa · 28 Dias</div>
+        <div style={{ width: 88, height: 88, borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}, #8B5E2A)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 40 }}>
+          {isAdmin ? "👑" : "🧘‍♀️"}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>{isAdmin ? "Administrador" : "Bem-vinda!"}</div>
+        <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{currentUser}</div>
+        {isAdmin && (
+          <span style={{ display: "inline-block", marginTop: 6, background: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: 11, padding: "3px 10px", borderRadius: 20, border: "1px solid #FFB74D" }}>
+            👑 ADMIN
+          </span>
+        )}
       </div>
+
+      {/* Botão admin — só visível para o admin */}
+      {isAdmin && (
+        <button onClick={onOpenAdmin} style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg, #E65100, #BF360C)", color: "#FFF", borderRadius: 16, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 20px rgba(230,81,0,0.3)" }}>
+          <span style={{ fontSize: 20 }}>🔐</span>
+          GERENCIAR ACESSOS
+        </button>
+      )}
 
       {/* Plano ativo */}
       <div style={{ background: C.card, borderRadius: 18, padding: 18, marginBottom: 16, border: `1px solid ${C.border}` }}>
@@ -798,7 +860,7 @@ function TabPerfil() {
       </div>
 
       {/* Dicas */}
-      <div style={{ background: C.accentLight, borderRadius: 18, padding: 18, border: `1px solid ${C.border}` }}>
+      <div style={{ background: C.accentLight, borderRadius: 18, padding: 18, marginBottom: 16, border: `1px solid ${C.border}` }}>
         <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: C.accent }}>💡 Dicas Importantes</h3>
         {[
           "Hidrate-se bem: beba 2L de água por dia",
@@ -812,6 +874,11 @@ function TabPerfil() {
           </div>
         ))}
       </div>
+
+      {/* Sair */}
+      <button onClick={onLogout} style={{ width: "100%", padding: "14px", background: C.card, color: C.red, borderRadius: 30, border: `2px solid ${C.red}`, fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 10 }}>
+        SAIR DA CONTA
+      </button>
     </div>
   );
 }
@@ -936,6 +1003,163 @@ function BottomNav({ tab, setTab }) {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// ─── TELA DE LOGIN ────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setError("Digite um e-mail válido.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setTimeout(() => {
+      const ok = onLogin(trimmed);
+      if (!ok) {
+        setError("❌ Acesso negado. Seu e-mail não está na lista de acesso autorizado.");
+      }
+      setLoading(false);
+    }, 800);
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #FAF0E0 0%, #F5E6D0 50%, #EEDAD8 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "30px 24px", maxWidth: 430, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(135deg, #C17D3C, #8B5E2A)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 10px 36px rgba(193,125,60,0.3)", fontSize: 44 }}>🧘‍♀️</div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1A1A1A", margin: "0 0 4px", letterSpacing: -0.5 }}>CorpoVivo</h1>
+        <p style={{ margin: 0, color: "#8B7355", fontSize: 14 }}>Pilates em Casa · 28 Dias</p>
+      </div>
+
+      <div style={{ background: "#FFFFFF", borderRadius: 24, padding: "28px 24px", width: "100%", boxShadow: "0 4px 30px rgba(0,0,0,0.08)", border: `1px solid ${C.border}` }}>
+        <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: C.text }}>Entrar</h2>
+        <p style={{ margin: "0 0 22px", fontSize: 13, color: C.textMuted }}>Digite seu e-mail para acessar o programa</p>
+
+        <form onSubmit={handleSubmit}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>E-mail</label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError(""); }}
+            placeholder="seu@email.com"
+            style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: `1.5px solid ${error ? C.red : C.border}`, fontSize: 15, color: C.text, background: C.bg, outline: "none", boxSizing: "border-box", marginBottom: 8 }}
+          />
+          {error && (
+            <div style={{ background: C.redLight, color: C.red, borderRadius: 12, padding: "10px 14px", fontSize: 13, marginBottom: 14, lineHeight: 1.4 }}>
+              {error}
+            </div>
+          )}
+          <button type="submit" disabled={loading} style={{ width: "100%", padding: "15px", background: loading ? C.border : C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", marginTop: error ? 0 : 8, letterSpacing: 0.5 }}>
+            {loading ? "Verificando..." : "ENTRAR →"}
+          </button>
+        </form>
+      </div>
+
+      <p style={{ marginTop: 22, fontSize: 12, color: "#B0A090", textAlign: "center", lineHeight: 1.6 }}>
+        Acesso restrito a membros autorizados.<br />Entre em contato com a administradora para solicitar acesso.
+      </p>
+    </div>
+  );
+}
+
+// ─── MODAL: PAINEL DE ADMINISTRAÇÃO ──────────────────────────────────────────
+function AdminPanelModal({ accessList, onAdd, onRemove, onClose }) {
+  const [newEmail, setNewEmail] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState("ok");
+
+  function handleAdd() {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      setFeedback("Digite um e-mail válido."); setFeedbackType("err"); return;
+    }
+    if (accessList.includes(trimmed)) {
+      setFeedback("Este e-mail já tem acesso."); setFeedbackType("err"); return;
+    }
+    onAdd(trimmed);
+    setNewEmail("");
+    setFeedback(`✓ Acesso concedido para ${trimmed}`);
+    setFeedbackType("ok");
+    setTimeout(() => setFeedback(""), 3000);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.card, borderRadius: "24px 24px 0 0", maxWidth: 430, width: "100%", maxHeight: "90vh", display: "flex", flexDirection: "column", paddingBottom: 30 }} onClick={e => e.stopPropagation()}>
+
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, background: C.border, borderRadius: 2 }} />
+        </div>
+
+        <div style={{ padding: "16px 20px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <span style={{ fontSize: 26 }}>🔐</span>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Controle de Acesso</h2>
+          </div>
+          <p style={{ margin: "0 0 18px", fontSize: 13, color: C.textMuted }}>Gerencie quem pode acessar o aplicativo</p>
+
+          <div style={{ background: C.cardAlt, borderRadius: 16, padding: "14px 16px", marginBottom: 4 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Conceder acesso a novo e-mail</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => { setNewEmail(e.target.value); setFeedback(""); }}
+                onKeyDown={e => e.key === "Enter" && handleAdd()}
+                placeholder="email@exemplo.com"
+                style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${C.border}`, fontSize: 14, color: C.text, background: "#FFF", outline: "none", boxSizing: "border-box" }}
+              />
+              <button onClick={handleAdd} style={{ padding: "11px 18px", background: C.primary, color: "#FFF", borderRadius: 12, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", flexShrink: 0 }}>
+                + ADD
+              </button>
+            </div>
+            {feedback && (
+              <div style={{ marginTop: 8, fontSize: 13, color: feedbackType === "ok" ? C.green : C.red, fontWeight: 600 }}>
+                {feedback}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
+            {accessList.length} e-mail{accessList.length !== 1 ? "s" : ""} com acesso
+          </div>
+          {accessList.map((em) => {
+            const isAdminRow = em === ADMIN_EMAIL;
+            return (
+              <div key={em} style={{ background: C.card, borderRadius: 14, padding: "12px 14px", marginBottom: 8, border: `1px solid ${isAdminRow ? "#FFB74D" : C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: isAdminRow ? "#FFF3E0" : C.cardAlt, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18 }}>
+                  {isAdminRow ? "👑" : "👤"}
+                </div>
+                <div style={{ flex: 1, overflow: "hidden" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{em}</div>
+                  {isAdminRow && <div style={{ fontSize: 11, color: "#E65100", fontWeight: 700 }}>ADMINISTRADOR</div>}
+                </div>
+                {!isAdminRow && (
+                  <button onClick={() => onRemove(em)} style={{ width: 32, height: 32, borderRadius: "50%", background: C.redLight, color: C.red, border: "none", fontWeight: 700, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ padding: "0 20px", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ width: "100%", padding: "14px", background: C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+            FECHAR
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
