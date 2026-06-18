@@ -1,1858 +1,1165 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const COLORS = {
-  primary: "#6C3FC5",
-  primaryLight: "#8B5CF6",
-  primaryDark: "#4C2A9A",
-  secondary: "#F472B6",
-  accent: "#10B981",
-  bg: "#0F0A1E",
-  bgCard: "#1A1035",
-  bgCardLight: "#231448",
-  text: "#FFFFFF",
-  textMuted: "#A78BCA",
-  textLight: "#D1C4E9",
-  border: "#3D2A6E",
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
+// ─── ADMIN & ACESSO ───────────────────────────────────────────────────────────
+const ADMIN_EMAIL = "ndhub186@gmail.com";
+
+// ─── CORES ──────────────────────────────────────────────────────────────────
+const C = {
+  bg: "#FAF7F2",
+  card: "#FFFFFF",
+  cardAlt: "#F5F0E8",
+  primary: "#1A1A1A",
+  accent: "#B07D4A",
+  accentLight: "#F5EAD8",
+  green: "#27AE60",
+  greenLight: "#E8F8EF",
+  red: "#E74C3C",
+  redLight: "#FDECEA",
+  text: "#1A1A1A",
+  textMuted: "#8B7355",
+  border: "#E8DDD0",
+  tabBg: "#FFFFFF",
+  rest: "#E8F4FD",
+  restText: "#2980B9",
 };
 
-const exercises = [
-  {
+// ─── BIBLIOTECA DE EXERCÍCIOS ────────────────────────────────────────────────
+const EXERCISES = {
+  1: {
     id: 1,
-    name: "Ponte de Parede",
-    duration: "45 seg",
-    reps: "3 séries",
-    level: "Iniciante",
-    muscles: ["Glúteos", "Core"],
-    description:
-      "Apoie os pés na parede e eleve o quadril formando uma ponte. Mantenha por 3 segundos.",
-    emoji: "🧘",
-    calories: 45,
-  },
-  {
-    id: 2,
     name: "Agachamento na Parede",
-    duration: "60 seg",
-    reps: "3 séries",
-    level: "Iniciante",
-    muscles: ["Pernas", "Glúteos"],
-    description:
-      "Com as costas na parede, desça até 90° nos joelhos. Segure a posição.",
-    emoji: "🏋️",
-    calories: 60,
-  },
-  {
-    id: 3,
-    name: "Pilates Leg Circles",
-    duration: "30 seg",
-    reps: "4 séries",
-    level: "Intermediário",
-    muscles: ["Core", "Quadris"],
-    description:
-      "Deite com as pernas na parede e faça círculos controlados com as pernas.",
-    emoji: "⭕",
-    calories: 50,
-  },
-  {
-    id: 4,
-    name: "Flexão Parede",
-    duration: "40 seg",
-    reps: "3 séries",
-    level: "Iniciante",
-    muscles: ["Peito", "Braços"],
-    description:
-      "Com as mãos na parede, faça flexões inclinadas mantendo o corpo reto.",
-    emoji: "💪",
+    muscle: "Pernas e Glúteos",
     calories: 55,
+    duration: "45 seg",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=480&q=80&auto=format&fit=crop",
+    instructions: "Encoste as costas na parede com os pés afastados na largura dos ombros. Desça lentamente dobrando os joelhos até 90°, como se fosse sentar numa cadeira. Mantenha as costas retas na parede e os joelhos alinhados com os pés. Segure a posição por 30-45 segundos.",
+    tips: "Mantenha o core contraído e respire de forma controlada.",
   },
-  {
-    id: 5,
-    name: "Pliê Parede",
-    duration: "50 seg",
-    reps: "3 séries",
-    level: "Intermediário",
-    muscles: ["Pernas", "Core"],
-    description:
-      "Pés afastados com dedos apontados para fora, desça o quadril mantendo o core ativo.",
-    emoji: "🩰",
-    calories: 65,
-  },
-  {
-    id: 6,
-    name: "Roll Down Parede",
-    duration: "30 seg",
-    reps: "5 séries",
-    level: "Avançado",
-    muscles: ["Coluna", "Core"],
-    description:
-      "De pé na parede, role a coluna vertebra por vertebra até dobrar completamente.",
-    emoji: "🌀",
-    calories: 40,
-  },
-];
-
-const mealPlans = [
-  {
-    time: "Café da manhã",
-    time_short: "07:00",
-    icon: "🌅",
-    meal: "Bowl de Açaí com Granola",
-    calories: 320,
-    protein: "8g",
-    carbs: "52g",
-    fat: "10g",
-    color: "#8B5CF6",
-  },
-  {
-    time: "Lanche da Manhã",
-    time_short: "10:00",
-    icon: "🍎",
-    meal: "Frutas + Castanhas",
-    calories: 180,
-    protein: "4g",
-    carbs: "22g",
-    fat: "9g",
-    color: "#F472B6",
-  },
-  {
-    time: "Almoço",
-    time_short: "13:00",
-    icon: "☀️",
-    meal: "Frango Grelhado + Quinoa + Salada",
-    calories: 450,
-    protein: "35g",
-    carbs: "38g",
-    fat: "12g",
-    color: "#10B981",
-  },
-  {
-    time: "Lanche da Tarde",
-    time_short: "16:00",
-    icon: "🥤",
-    meal: "Iogurte Grego + Mel + Chia",
-    calories: 210,
-    protein: "15g",
-    carbs: "28g",
-    fat: "4g",
-    color: "#F59E0B",
-  },
-  {
-    time: "Jantar",
-    time_short: "19:00",
-    icon: "🌙",
-    meal: "Salmão + Legumes no Vapor + Arroz Integral",
-    calories: 520,
-    protein: "38g",
-    carbs: "45g",
-    fat: "16g",
-    color: "#3B82F6",
-  },
-];
-
-const quizQuestions = [
-  {
-    id: 1,
-    question: "Qual é seu principal objetivo?",
-    options: [
-      { label: "Perder peso", icon: "⚡" },
-      { label: "Ganhar flexibilidade", icon: "🧘" },
-      { label: "Fortalecer o core", icon: "💪" },
-      { label: "Reduzir estresse", icon: "🌿" },
-    ],
-  },
-  {
+  2: {
     id: 2,
-    question: "Qual é o seu nível de experiência?",
-    options: [
-      { label: "Iniciante", icon: "🌱" },
-      { label: "Intermediário", icon: "🌿" },
-      { label: "Avançado", icon: "🌳" },
-      { label: "Expert", icon: "🏆" },
-    ],
+    name: "Ponte de Ombros",
+    muscle: "Glúteos e Posteriores",
+    calories: 50,
+    duration: "40 seg",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=480&q=80&auto=format&fit=crop",
+    instructions: "Deite de costas com os joelhos dobrados e os pés apoiados na parede. Eleve o quadril formando uma linha reta dos ombros aos joelhos. Contraia os glúteos no topo e desça lentamente.",
+    tips: "Pressione os pés na parede para ativar os glúteos ao máximo.",
   },
-  {
+  3: {
     id: 3,
-    question: "Quantos dias por semana você pode treinar?",
-    options: [
-      { label: "2-3 dias", icon: "📅" },
-      { label: "4-5 dias", icon: "🗓️" },
-      { label: "Todos os dias", icon: "🔥" },
-      { label: "Apenas fins de semana", icon: "🌟" },
-    ],
+    name: "Elevação de Pernas",
+    muscle: "Core e Abdômen",
+    calories: 45,
+    duration: "30 seg",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=480&q=80&auto=format&fit=crop",
+    instructions: "Deite de costas próxima à parede, com as pernas estendidas apoiadas na parede. Afaste as pernas lentamente da parede mantendo-as retas, depois retorne. Controle o movimento e mantenha a lombar na colchonete.",
+    tips: "Nunca perca o contato da lombar com o chão.",
   },
-  {
+  4: {
     id: 4,
-    question: "Quanto tempo tem para cada treino?",
-    options: [
-      { label: "15-20 minutos", icon: "⏱️" },
-      { label: "30 minutos", icon: "⏰" },
-      { label: "45 minutos", icon: "🕐" },
-      { label: "1 hora ou mais", icon: "🕑" },
-    ],
+    name: "Flexão na Parede",
+    muscle: "Peito, Ombros e Tríceps",
+    calories: 50,
+    duration: "40 seg",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=480&q=80&auto=format&fit=crop",
+    instructions: "Fique de pé a cerca de 60 cm da parede. Apoie as palmas das mãos na parede na altura dos ombros. Flexione os cotovelos aproximando o peito da parede, mantendo o corpo reto. Empurre de volta à posição inicial.",
+    tips: "Quanto mais longe da parede, mais difícil o exercício.",
   },
+  5: {
+    id: 5,
+    name: "Prancha com Apoio",
+    muscle: "Core, Abdômen e Costas",
+    calories: 60,
+    duration: "30 seg",
+    sets: "3 séries",
+    level: "Intermediário",
+    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=480&q=80&auto=format&fit=crop",
+    instructions: "Apoie os antebraços no chão e os pés na parede, mantendo o corpo reto como uma prancha. Contraia o abdômen, glúteos e coxas. Respire de forma controlada e mantenha a posição.",
+    tips: "Não deixe o quadril subir nem cair — mantenha uma linha reta.",
+  },
+  6: {
+    id: 6,
+    name: "Círculo de Pernas",
+    muscle: "Quadris e Coxas",
+    calories: 40,
+    duration: "30 seg cada lado",
+    sets: "2 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=480&q=80&auto=format&fit=crop",
+    instructions: "Deite de costas com as pernas na parede. Afaste uma perna fazendo um círculo controlado no ar, depois troque de lado. Mantenha a lombar colada no chão durante todo o movimento.",
+    tips: "Faça círculos pequenos no início e aumente conforme ganha confiança.",
+  },
+  7: {
+    id: 7,
+    name: "Extensão de Quadril",
+    muscle: "Glúteos e Posteriores",
+    calories: 45,
+    duration: "12 repetições",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=480&q=80&auto=format&fit=crop",
+    instructions: "Em pé de frente para a parede, apoie as mãos nela. Empurre uma perna para trás e para cima, contraindo o glúteo no topo. Mantenha o tronco ereto e controle a descida. Alterne as pernas.",
+    tips: "Não curve a coluna — o movimento vem apenas do quadril.",
+  },
+  8: {
+    id: 8,
+    name: "Pliê na Parede",
+    muscle: "Coxas Internas e Glúteos",
+    calories: 55,
+    duration: "45 seg",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1545389336-cf090694435e?w=480&q=80&auto=format&fit=crop",
+    instructions: "Fique de pé com as costas na parede, pés afastados e dedos apontados para fora (tipo 'V'). Desça o quadril dobrando os joelhos na direção dos dedos dos pés. Suba lentamente contraindo as coxas internas e glúteos.",
+    tips: "Mantenha os joelhos alinhados com os dedos dos pés ao longo de todo o movimento.",
+  },
+  9: {
+    id: 9,
+    name: "Roll Down na Parede",
+    muscle: "Coluna e Core",
+    calories: 35,
+    duration: "8 repetições",
+    sets: "2 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1562771379-eafdca7a02f8?w=480&q=80&auto=format&fit=crop",
+    instructions: "Em pé com as costas na parede. Enrole a coluna vértebra por vértebra para frente e para baixo, deixando os braços pendentes. Desça até onde for confortável. Suba lentamente, reconstituindo cada vértebra na parede.",
+    tips: "Esse exercício é excelente para mobilizar e aliviar a coluna.",
+  },
+  10: {
+    id: 10,
+    name: "Tesoura de Pernas",
+    muscle: "Core e Coxas",
+    calories: 45,
+    duration: "30 seg",
+    sets: "3 séries",
+    level: "Intermediário",
+    image: "https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=480&q=80&auto=format&fit=crop",
+    instructions: "Deite de costas com as pernas na parede. Abra as pernas lateralmente o mais que conseguir de forma confortável, depois feche lentamente. Mantenha a lombar colada no chão durante todo o exercício.",
+    tips: "Vá somente até onde sentir um alongamento suave, sem forçar.",
+  },
+  11: {
+    id: 11,
+    name: "Abdução de Quadril",
+    muscle: "Coxas Externas e Glúteos",
+    calories: 40,
+    duration: "15 repetições",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1578762560042-46ad127c95ea?w=480&q=80&auto=format&fit=crop",
+    instructions: "De lado com o cotovelo apoiado na colchonete e os pés na parede. Eleve a perna de cima afastando-a o máximo que conseguir, depois desça controlado. Mantenha o quadril estável durante o movimento. Troque de lado.",
+    tips: "Não deixe o quadril girar — o movimento é lateral.",
+  },
+  12: {
+    id: 12,
+    name: "Elevação de Calcanhar",
+    muscle: "Panturrilhas e Equilíbrio",
+    calories: 30,
+    duration: "20 repetições",
+    sets: "3 séries",
+    level: "Iniciante",
+    image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=480&q=80&auto=format&fit=crop",
+    instructions: "Em pé de frente para a parede, apoie levemente as pontas dos dedos para equilíbrio. Eleve os calcanhares do chão, ficando na ponta dos pés. Segure 2 segundos e desça controlado. Mantenha a postura ereta.",
+    tips: "Faça o movimento lento para sentir a contração nas panturrilhas.",
+  },
+};
+
+// ─── PLANO DE REFEIÇÕES (7 opções por tipo, rotação semanal) ─────────────────
+const BREAKFASTS = [
+  { name: "Omelete de Espinafre com Torrada Integral", cals: 285, prot: 22, carbs: 26, fat: 10, image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&q=80&auto=format&fit=crop", ingredients: "2 ovos inteiros, 1 punhado de espinafre, 1 col. queijo cottage, 2 fatias de pão integral, sal e azeite a gosto" },
+  { name: "Iogurte Natural com Granola e Frutas", cals: 260, prot: 14, carbs: 38, fat: 6, image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&auto=format&fit=crop", ingredients: "200g iogurte natural integral, 3 col. granola, 1/2 banana, morangos a gosto, 1 fio de mel" },
+  { name: "Vitamina de Banana com Aveia", cals: 270, prot: 12, carbs: 44, fat: 5, image: "https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=400&q=80&auto=format&fit=crop", ingredients: "1 banana, 4 col. aveia em flocos, 200ml leite (vaca ou vegetal), 1 col. chia, canela" },
+  { name: "Ovos Mexidos com Tomate e Queijo Cottage", cals: 250, prot: 24, carbs: 10, fat: 13, image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80&auto=format&fit=crop", ingredients: "3 ovos, 1 tomate médio, 3 col. queijo cottage, sal, pimenta, cebolinha, azeite" },
+  { name: "Panqueca de Aveia com Mel e Frutas", cals: 295, prot: 12, carbs: 46, fat: 7, image: "https://images.unsplash.com/photo-1565299543923-37dd37887442?w=400&q=80&auto=format&fit=crop", ingredients: "4 col. aveia, 2 ovos, 1 banana amassada, 1 col. mel, frutas vermelhas a gosto" },
+  { name: "Tapioca com Queijo e Tomate", cals: 240, prot: 15, carbs: 32, fat: 6, image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=80&auto=format&fit=crop", ingredients: "2 col. sopa de goma de tapioca, 2 fatias de queijo branco, 4 fatias de tomate, orégano" },
+  { name: "Mingau de Aveia com Frutas Vermelhas", cals: 255, prot: 10, carbs: 42, fat: 6, image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80&auto=format&fit=crop", ingredients: "5 col. aveia em flocos, 250ml leite desnatado, 1 col. mel, mix de frutas vermelhas, canela" },
 ];
 
-const stats = [
-  { label: "Treinos Completos", value: "24", icon: "🏆", color: "#8B5CF6" },
-  { label: "Calorias Queimadas", value: "3.240", icon: "🔥", color: "#F472B6" },
-  { label: "Dias Consecutivos", value: "7", icon: "⚡", color: "#10B981" },
-  { label: "Minutos Ativos", value: "480", icon: "⏱️", color: "#F59E0B" },
+const SNACKS = [
+  { name: "Banana com Pasta de Amendoim", cals: 185, prot: 5, carbs: 28, fat: 7, image: "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=400&q=80&auto=format&fit=crop", ingredients: "1 banana média, 1 col. sopa de pasta de amendoim integral (sem açúcar)" },
+  { name: "Castanhas e Frutas Secas", cals: 175, prot: 4, carbs: 18, fat: 11, image: "https://images.unsplash.com/photo-1536591375667-7e7b979c2a31?w=400&q=80&auto=format&fit=crop", ingredients: "10 castanhas-do-pará, 5 nozes, 1 col. uva-passa, 2 tâmaras" },
+  { name: "Iogurte Grego com Mel e Canela", cals: 160, prot: 12, carbs: 18, fat: 4, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&q=80&auto=format&fit=crop", ingredients: "170g iogurte grego natural, 1 col. chá de mel, 1 pitada de canela em pó" },
+  { name: "Maçã com Queijo Cottage", cals: 155, prot: 9, carbs: 22, fat: 3, image: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&q=80&auto=format&fit=crop", ingredients: "1 maçã média, 100g queijo cottage, canela a gosto" },
+  { name: "Smoothie Verde Energizante", cals: 150, prot: 4, carbs: 28, fat: 3, image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80&auto=format&fit=crop", ingredients: "1 punhado espinafre, 1 maçã verde, 1 pedaço gengibre, suco de 1 limão, 200ml água gelada" },
+  { name: "Abacate com Limão e Sal Marinho", cals: 165, prot: 2, carbs: 10, fat: 14, image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&q=80&auto=format&fit=crop", ingredients: "1/2 abacate médio, suco de 1 limão, sal marinho, pimenta opcional" },
+  { name: "Ovo Cozido com Pepino e Cenoura", cals: 140, prot: 8, carbs: 10, fat: 7, image: "https://images.unsplash.com/photo-1512621776951-a57ef161b3c4?w=400&q=80&auto=format&fit=crop", ingredients: "1 ovo cozido, 1/2 pepino, 1 cenoura baby, sal e azeite a gosto" },
 ];
 
-const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const completedDays = [0, 1, 2, 3, 5];
+const LUNCHES = [
+  { name: "Frango Grelhado com Arroz Integral e Salada", cals: 455, prot: 40, carbs: 46, fat: 9, image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80&auto=format&fit=crop", ingredients: "150g peito de frango grelhado, 4 col. sopa de arroz integral, alface, tomate, pepino, azeite e limão" },
+  { name: "Peixe Assado com Batata-Doce e Brócolis", cals: 420, prot: 38, carbs: 36, fat: 10, image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80&auto=format&fit=crop", ingredients: "150g filé de tilápia ou merluza assado, 1 batata-doce média, 1 xíc. brócolis no vapor, ervas" },
+  { name: "Atum com Quinoa e Salada Verde", cals: 390, prot: 35, carbs: 32, fat: 12, image: "https://images.unsplash.com/photo-1512621776951-a57ef161b3c4?w=400&q=80&auto=format&fit=crop", ingredients: "1 lata de atum em água (escorrido), 4 col. quinoa cozida, rúcula, azeitona, azeite e limão" },
+  { name: "Frango com Mandioca Cozida e Couve Refogada", cals: 445, prot: 38, carbs: 42, fat: 8, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop", ingredients: "150g frango cozido, 150g mandioca cozida, 2 folhas de couve refogada com alho, azeite" },
+  { name: "Ovos ao Forno com Arroz, Feijão e Legumes", cals: 460, prot: 28, carbs: 54, fat: 12, image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=80&auto=format&fit=crop", ingredients: "2 ovos, 3 col. arroz integral, 3 col. feijão carioca, cenoura, abobrinha, azeite" },
+  { name: "Frango Ensopado com Macarrão Integral e Tomate", cals: 440, prot: 36, carbs: 48, fat: 9, image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80&auto=format&fit=crop", ingredients: "150g frango em pedaços, 80g macarrão integral cozido, tomate, alho, cebola, azeite, ervas" },
+  { name: "Tilápia Grelhada com Arroz e Salada de Beterraba", cals: 410, prot: 36, carbs: 40, fat: 10, image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80&auto=format&fit=crop", ingredients: "150g tilápia grelhada com limão, 3 col. arroz branco ou integral, 1/2 beterraba cozida, rúcula" },
+];
 
+const DINNERS = [
+  { name: "Salmão Grelhado com Espinafre e Limão", cals: 380, prot: 36, carbs: 12, fat: 20, image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80&auto=format&fit=crop", ingredients: "150g filé de salmão, 2 punhados de espinafre refogado, suco de 1 limão, alho, azeite" },
+  { name: "Frango no Vapor com Legumes Coloridos", cals: 320, prot: 34, carbs: 22, fat: 8, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop", ingredients: "150g frango cozido no vapor, abobrinha, cenoura, brócolis, ervilha, azeite e ervas" },
+  { name: "Omelete de Legumes com Salada", cals: 295, prot: 22, carbs: 14, fat: 17, image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80&auto=format&fit=crop", ingredients: "3 ovos, pimentão, tomate, cebolinha, espinafre, 1 fio de azeite, salada verde" },
+  { name: "Sopa de Legumes com Frango Desfiado", cals: 310, prot: 30, carbs: 28, fat: 7, image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=80&auto=format&fit=crop", ingredients: "100g frango desfiado, cenoura, batata-doce, chuchu, caldo de galinha caseiro, ervas" },
+  { name: "Peixe Assado com Batata-Doce e Limão", cals: 360, prot: 32, carbs: 30, fat: 12, image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80&auto=format&fit=crop", ingredients: "150g peixe branco assado, 1 batata-doce pequena, limão, alecrim, azeite, alho" },
+  { name: "Salada de Quinoa com Grão-de-Bico", cals: 340, prot: 18, carbs: 44, fat: 10, image: "https://images.unsplash.com/photo-1512621776951-a57ef161b3c4?w=400&q=80&auto=format&fit=crop", ingredients: "4 col. quinoa cozida, 3 col. grão-de-bico, tomate cereja, pepino, rúcula, azeite, limão" },
+  { name: "Frango com Chuchu Refogado e Arroz Integral", cals: 350, prot: 34, carbs: 32, fat: 9, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80&auto=format&fit=crop", ingredients: "150g frango grelhado, 1 chuchu refogado com alho, 3 col. arroz integral, azeite" },
+];
+
+// ─── PLANO 28 DIAS ───────────────────────────────────────────────────────────
+const PLAN_28 = [
+  // SEMANA 1 — Fundamentos
+  { day: 1, week: 1, title: "Fundamentos", exercises: [1, 2, 4], isRest: false, duration: "20 min" },
+  { day: 2, week: 1, title: "Mobilidade", exercises: [3, 6, 9], isRest: false, duration: "22 min" },
+  { day: 3, week: 1, title: "Fortalecimento", exercises: [1, 5, 7], isRest: false, duration: "22 min" },
+  { day: 4, week: 1, title: "Descanso Ativo", exercises: [9, 12], isRest: true, duration: "10 min" },
+  { day: 5, week: 1, title: "Equilíbrio", exercises: [2, 4, 8], isRest: false, duration: "20 min" },
+  { day: 6, week: 1, title: "Pernas e Glúteos", exercises: [3, 7, 11], isRest: false, duration: "22 min" },
+  { day: 7, week: 1, title: "Alongamento", exercises: [9, 6, 12], isRest: false, duration: "18 min" },
+  // SEMANA 2 — Construção
+  { day: 8, week: 2, title: "Construção I", exercises: [1, 2, 4, 10], isRest: false, duration: "26 min" },
+  { day: 9, week: 2, title: "Flexibilidade+", exercises: [3, 6, 9, 11], isRest: false, duration: "25 min" },
+  { day: 10, week: 2, title: "Glúteos e Core", exercises: [1, 5, 7, 8], isRest: false, duration: "28 min" },
+  { day: 11, week: 2, title: "Descanso Ativo", exercises: [9, 12], isRest: true, duration: "10 min" },
+  { day: 12, week: 2, title: "Core e Braços", exercises: [2, 4, 5, 12], isRest: false, duration: "27 min" },
+  { day: 13, week: 2, title: "Pernas Completo", exercises: [3, 6, 10, 11], isRest: false, duration: "26 min" },
+  { day: 14, week: 2, title: "Recuperação", exercises: [9, 11, 12], isRest: false, duration: "20 min" },
+  // SEMANA 3 — Intensificação
+  { day: 15, week: 3, title: "Corpo Todo I", exercises: [1, 2, 4, 5, 7], isRest: false, duration: "32 min" },
+  { day: 16, week: 3, title: "Mobilidade+", exercises: [3, 6, 9, 10, 11], isRest: false, duration: "30 min" },
+  { day: 17, week: 3, title: "Força+", exercises: [1, 4, 7, 8, 12], isRest: false, duration: "32 min" },
+  { day: 18, week: 3, title: "Descanso Ativo", exercises: [9, 12], isRest: true, duration: "10 min" },
+  { day: 19, week: 3, title: "Queima Total", exercises: [2, 5, 8, 10, 11], isRest: false, duration: "33 min" },
+  { day: 20, week: 3, title: "Pernas e Quadris", exercises: [3, 6, 9, 11, 12], isRest: false, duration: "30 min" },
+  { day: 21, week: 3, title: "Mobilidade Total", exercises: [6, 9, 10, 11, 12], isRest: false, duration: "28 min" },
+  // SEMANA 4 — Pico
+  { day: 22, week: 4, title: "Pico I", exercises: [1, 2, 4, 5, 7, 10], isRest: false, duration: "38 min" },
+  { day: 23, week: 4, title: "Flexib. Total", exercises: [3, 6, 8, 9, 11, 12], isRest: false, duration: "36 min" },
+  { day: 24, week: 4, title: "Força Total", exercises: [1, 4, 5, 7, 8, 10], isRest: false, duration: "38 min" },
+  { day: 25, week: 4, title: "Descanso Ativo", exercises: [9, 12], isRest: true, duration: "10 min" },
+  { day: 26, week: 4, title: "Pernas Completo", exercises: [2, 3, 6, 9, 11, 12], isRest: false, duration: "36 min" },
+  { day: 27, week: 4, title: "Full Body+", exercises: [1, 4, 5, 7, 8, 10], isRest: false, duration: "38 min" },
+  { day: 28, week: 4, title: "🏆 Conquista!", exercises: [1, 2, 3, 4, 5, 6], isRest: false, duration: "40 min" },
+];
+
+// Adiciona refeições a cada dia (rotação de 7)
+PLAN_28.forEach((d, i) => {
+  const r = i % 7;
+  d.meals = {
+    breakfast: BREAKFASTS[r],
+    morningSnack: SNACKS[r],
+    lunch: LUNCHES[r],
+    afternoonSnack: SNACKS[(r + 3) % 7],
+    dinner: DINNERS[r],
+  };
+  d.totalCals = d.meals.breakfast.cals + d.meals.morningSnack.cals + d.meals.lunch.cals + d.meals.afternoonSnack.cals + d.meals.dinner.cals;
+  d.totalProt = d.meals.breakfast.prot + d.meals.morningSnack.prot + d.meals.lunch.prot + d.meals.afternoonSnack.prot + d.meals.dinner.prot;
+  d.totalCarbs = d.meals.breakfast.carbs + d.meals.morningSnack.carbs + d.meals.lunch.carbs + d.meals.afternoonSnack.carbs + d.meals.dinner.carbs;
+  d.totalFat = d.meals.breakfast.fat + d.meals.morningSnack.fat + d.meals.lunch.fat + d.meals.afternoonSnack.fat + d.meals.dinner.fat;
+});
+
+// ─── LISTA DE COMPRAS BRASIL ─────────────────────────────────────────────────
+const SHOPPING_LIST = {
+  "🥩 Proteínas": [
+    "Peito de frango (congelado ou resfriado)",
+    "Filé de tilápia ou merluza",
+    "Salmão (fresco, congelado ou em lata)",
+    "Atum em água (lata)",
+    "Ovos caipiras ou orgânicos",
+    "Queijo cottage ou ricota",
+    "Iogurte grego natural (sem açúcar)",
+    "Iogurte natural integral",
+    "Grão-de-bico (lata ou seco)",
+    "Lentilha (seca)",
+  ],
+  "🥦 Vegetais e Verduras": [
+    "Brócolis (fresco ou congelado)",
+    "Espinafre (fresco ou congelado)",
+    "Couve",
+    "Rúcula",
+    "Alface americana",
+    "Tomate",
+    "Pepino",
+    "Cenoura",
+    "Beterraba",
+    "Chuchu",
+    "Abobrinha",
+    "Pimentão colorido",
+  ],
+  "🍌 Frutas": [
+    "Banana",
+    "Maçã",
+    "Laranja",
+    "Mamão",
+    "Morango",
+    "Abacate",
+    "Limão",
+    "Frutas vermelhas congeladas",
+  ],
+  "🌾 Carboidratos": [
+    "Arroz integral",
+    "Macarrão integral",
+    "Aveia em flocos",
+    "Goma de tapioca",
+    "Batata-doce",
+    "Mandioca ou aipim",
+    "Quinoa",
+    "Pão integral (sem açúcar)",
+    "Granola natural",
+  ],
+  "🥜 Gorduras Boas": [
+    "Azeite de oliva extra virgem",
+    "Pasta de amendoim integral (sem açúcar)",
+    "Castanha-do-pará",
+    "Nozes",
+    "Chia",
+    "Linhaça",
+    "Amendoim natural (sem sal)",
+  ],
+  "🧂 Temperos e Outros": [
+    "Alho",
+    "Cebola",
+    "Gengibre",
+    "Canela em pó",
+    "Mel puro",
+    "Sal marinho",
+    "Pimenta-do-reino",
+    "Caldo de galinha caseiro (sem glutamato)",
+    "Ervas frescas (cebolinha, salsinha, manjericão)",
+  ],
+};
+
+// ─── UTILITÁRIOS ─────────────────────────────────────────────────────────────
+function useStorage(key, def) {
+  const [val, setVal] = useState(() => {
+    try {
+      const s = localStorage.getItem(key);
+      return s ? JSON.parse(s) : def;
+    } catch { return def; }
+  });
+  const update = (v) => {
+    const next = typeof v === "function" ? v(val) : v;
+    setVal(next);
+    localStorage.setItem(key, JSON.stringify(next));
+  };
+  return [val, update];
+}
+
+// ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState("splash");
-  const [activeTab, setActiveTab] = useState("home");
-  const [quizStep, setQuizStep] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState([]);
-  const [selectedExercise, setSelectedExercise] = useState(null);
-  const [activeWorkout, setActiveWorkout] = useState(false);
-  const [workoutTimer, setWorkoutTimer] = useState(0);
-  const [selectedMeal, setSelectedMeal] = useState(null);
-  const [filterLevel, setFilterLevel] = useState("Todos");
+  const [tab, setTab] = useState("plano");
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [completedEx, setCompletedEx] = useStorage("pv_ex", {});
+  const [completedMeals, setCompletedMeals] = useStorage("pv_meals", {});
+  const [showFoodList, setShowFoodList] = useState(false);
+  const [expandedMeal, setExpandedMeal] = useState(null);
+  const [expandedEx, setExpandedEx] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(Object.keys(SHOPPING_LIST)[0]);
+  const [splashFade, setSplashFade] = useState(false);
 
-  // Splash → Onboarding → Quiz → Home
-  const handleSplash = () => setScreen("onboarding");
-  const handleOnboarding = () => setScreen("quiz");
-  const handleQuizAnswer = (answer) => {
-    const newAnswers = [...quizAnswers, answer];
-    setQuizAnswers(newAnswers);
-    if (quizStep < quizQuestions.length - 1) {
-      setQuizStep(quizStep + 1);
+  // ── Auth & Acesso ──
+  const [currentUser, setCurrentUser] = useStorage("pv_user", null);
+  const [accessList, setAccessList] = useStorage("pv_access", [ADMIN_EMAIL]);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  const isAdmin = currentUser === ADMIN_EMAIL;
+
+  function handleLogin(email) {
+    const norm = email.toLowerCase().trim();
+    // Garante que o admin sempre está na lista
+    const list = accessList.includes(ADMIN_EMAIL) ? accessList : [ADMIN_EMAIL, ...accessList];
+    if (list.includes(norm)) {
+      setCurrentUser(norm);
     } else {
-      setScreen("home");
+      return false; // acesso negado
     }
-  };
-
-  const filteredExercises =
-    filterLevel === "Todos"
-      ? exercises
-      : exercises.filter((e) => e.level === filterLevel);
-
-  const styles = {
-    app: {
-      backgroundColor: COLORS.bg,
-      minHeight: "100vh",
-      maxWidth: "430px",
-      margin: "0 auto",
-      fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-      position: "relative",
-      overflowX: "hidden",
-    },
-    // SPLASH
-    splash: {
-      background: `linear-gradient(160deg, ${COLORS.primaryDark} 0%, ${COLORS.bg} 60%, #0D0626 100%)`,
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "40px 24px",
-      textAlign: "center",
-      position: "relative",
-      overflow: "hidden",
-    },
-    splashGlow: {
-      position: "absolute",
-      width: "300px",
-      height: "300px",
-      borderRadius: "50%",
-      background: `radial-gradient(circle, ${COLORS.primary}44 0%, transparent 70%)`,
-      top: "10%",
-      left: "50%",
-      transform: "translateX(-50%)",
-      pointerEvents: "none",
-    },
-    splashLogo: {
-      fontSize: "72px",
-      marginBottom: "16px",
-      filter: "drop-shadow(0 0 20px #8B5CF688)",
-    },
-    splashBrand: {
-      fontSize: "13px",
-      color: COLORS.textMuted,
-      letterSpacing: "3px",
-      textTransform: "uppercase",
-      marginBottom: "8px",
-    },
-    splashTitle: {
-      fontSize: "36px",
-      fontWeight: "900",
-      color: COLORS.text,
-      lineHeight: "1.1",
-      marginBottom: "8px",
-      background: `linear-gradient(135deg, #fff 0%, ${COLORS.primaryLight} 100%)`,
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-    },
-    splashSubtitle: {
-      fontSize: "16px",
-      color: COLORS.textLight,
-      marginBottom: "48px",
-      lineHeight: "1.5",
-    },
-    splashFeatures: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      width: "100%",
-      marginBottom: "40px",
-    },
-    splashFeatureItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      background: `${COLORS.bgCard}99`,
-      borderRadius: "12px",
-      padding: "12px 16px",
-      border: `1px solid ${COLORS.border}`,
-    },
-    splashFeatureIcon: { fontSize: "24px" },
-    splashFeatureText: {
-      fontSize: "14px",
-      color: COLORS.textLight,
-      textAlign: "left",
-    },
-    // ONBOARDING
-    onboarding: {
-      background: `linear-gradient(180deg, ${COLORS.primary}22 0%, ${COLORS.bg} 40%)`,
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      padding: "0",
-    },
-    onboardingImage: {
-      width: "100%",
-      height: "380px",
-      background: `linear-gradient(160deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 50%, ${COLORS.secondary}66 100%)`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "120px",
-      position: "relative",
-      overflow: "hidden",
-    },
-    onboardingBadge: {
-      position: "absolute",
-      top: "20px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: `${COLORS.bgCard}CC`,
-      backdropFilter: "blur(10px)",
-      borderRadius: "20px",
-      padding: "6px 16px",
-      border: `1px solid ${COLORS.border}`,
-      fontSize: "12px",
-      color: COLORS.textMuted,
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-    },
-    onboardingContent: {
-      padding: "32px 24px 40px",
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-    },
-    onboardingTag: {
-      background: `${COLORS.primary}33`,
-      color: COLORS.primaryLight,
-      fontSize: "11px",
-      fontWeight: "700",
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-      padding: "4px 12px",
-      borderRadius: "20px",
-      display: "inline-block",
-      marginBottom: "16px",
-      border: `1px solid ${COLORS.primary}44`,
-    },
-    onboardingTitle: {
-      fontSize: "30px",
-      fontWeight: "900",
-      color: COLORS.text,
-      lineHeight: "1.2",
-      marginBottom: "12px",
-    },
-    onboardingDesc: {
-      fontSize: "15px",
-      color: COLORS.textMuted,
-      lineHeight: "1.6",
-      marginBottom: "32px",
-      flex: 1,
-    },
-    pillsRow: {
-      display: "flex",
-      gap: "8px",
-      flexWrap: "wrap",
-      marginBottom: "28px",
-    },
-    pill: {
-      background: `${COLORS.bgCardLight}`,
-      border: `1px solid ${COLORS.border}`,
-      borderRadius: "20px",
-      padding: "6px 14px",
-      fontSize: "12px",
-      color: COLORS.textLight,
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-    },
-    // QUIZ
-    quiz: {
-      background: COLORS.bg,
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      padding: "24px",
-    },
-    quizProgress: {
-      display: "flex",
-      gap: "6px",
-      marginBottom: "32px",
-    },
-    quizProgressBar: (active, done) => ({
-      flex: 1,
-      height: "4px",
-      borderRadius: "2px",
-      background: done || active ? COLORS.primary : COLORS.border,
-      transition: "background 0.3s",
-    }),
-    quizHeader: {
-      marginBottom: "32px",
-    },
-    quizStep: {
-      fontSize: "12px",
-      color: COLORS.textMuted,
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-      marginBottom: "8px",
-    },
-    quizQuestion: {
-      fontSize: "24px",
-      fontWeight: "800",
-      color: COLORS.text,
-      lineHeight: "1.3",
-    },
-    quizOptions: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "12px",
-      flex: 1,
-    },
-    quizOption: (hover) => ({
-      background: hover ? `${COLORS.primary}33` : COLORS.bgCard,
-      border: `2px solid ${hover ? COLORS.primary : COLORS.border}`,
-      borderRadius: "16px",
-      padding: "20px 16px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "10px",
-      cursor: "pointer",
-      transition: "all 0.2s",
-      transform: hover ? "scale(1.03)" : "scale(1)",
-    }),
-    quizOptionIcon: { fontSize: "32px" },
-    quizOptionLabel: {
-      fontSize: "13px",
-      color: COLORS.text,
-      fontWeight: "600",
-      textAlign: "center",
-    },
-    // COMMON
-    btn: (variant = "primary") => ({
-      background:
-        variant === "primary"
-          ? `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`
-          : variant === "secondary"
-          ? `${COLORS.bgCard}`
-          : "transparent",
-      color: COLORS.text,
-      border: variant === "secondary" ? `1px solid ${COLORS.border}` : "none",
-      borderRadius: "16px",
-      padding: "16px 24px",
-      fontSize: "16px",
-      fontWeight: "700",
-      cursor: "pointer",
-      width: "100%",
-      letterSpacing: "0.5px",
-      boxShadow:
-        variant === "primary" ? `0 8px 24px ${COLORS.primary}44` : "none",
-      transition: "all 0.2s",
-    }),
-    // MAIN HOME
-    header: {
-      padding: "20px 20px 0",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    headerLeft: {},
-    headerGreet: {
-      fontSize: "12px",
-      color: COLORS.textMuted,
-      letterSpacing: "1px",
-    },
-    headerName: {
-      fontSize: "22px",
-      fontWeight: "900",
-      color: COLORS.text,
-    },
-    headerAvatar: {
-      width: "44px",
-      height: "44px",
-      borderRadius: "50%",
-      background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.secondary})`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "20px",
-      boxShadow: `0 4px 12px ${COLORS.primary}66`,
-    },
-    scrollArea: {
-      overflowY: "auto",
-      paddingBottom: "100px",
-    },
-    section: {
-      padding: "20px 20px 0",
-    },
-    sectionHeader: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: "14px",
-    },
-    sectionTitle: {
-      fontSize: "18px",
-      fontWeight: "800",
-      color: COLORS.text,
-    },
-    sectionLink: {
-      fontSize: "13px",
-      color: COLORS.primaryLight,
-      fontWeight: "600",
-      cursor: "pointer",
-      background: "none",
-      border: "none",
-    },
-    // HERO CARD
-    heroCard: {
-      margin: "20px",
-      borderRadius: "20px",
-      background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 60%, ${COLORS.secondary}88 100%)`,
-      padding: "24px",
-      position: "relative",
-      overflow: "hidden",
-      boxShadow: `0 12px 40px ${COLORS.primary}44`,
-    },
-    heroGlow: {
-      position: "absolute",
-      right: "-20px",
-      top: "-20px",
-      width: "160px",
-      height: "160px",
-      borderRadius: "50%",
-      background: `${COLORS.secondary}33`,
-      pointerEvents: "none",
-    },
-    heroEmoji: {
-      fontSize: "60px",
-      position: "absolute",
-      right: "20px",
-      top: "50%",
-      transform: "translateY(-50%)",
-    },
-    heroTag: {
-      background: "rgba(255,255,255,0.2)",
-      color: "#fff",
-      fontSize: "10px",
-      fontWeight: "700",
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-      padding: "4px 10px",
-      borderRadius: "20px",
-      display: "inline-block",
-      marginBottom: "10px",
-    },
-    heroTitle: {
-      fontSize: "22px",
-      fontWeight: "900",
-      color: "#fff",
-      marginBottom: "6px",
-      lineHeight: "1.2",
-    },
-    heroSub: {
-      fontSize: "13px",
-      color: "rgba(255,255,255,0.8)",
-      marginBottom: "16px",
-    },
-    heroMetaRow: {
-      display: "flex",
-      gap: "16px",
-    },
-    heroMeta: {
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-      fontSize: "12px",
-      color: "rgba(255,255,255,0.85)",
-    },
-    // STATS
-    statsGrid: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "12px",
-    },
-    statCard: (color) => ({
-      background: COLORS.bgCard,
-      borderRadius: "16px",
-      padding: "16px",
-      border: `1px solid ${COLORS.border}`,
-      position: "relative",
-      overflow: "hidden",
-    }),
-    statAccent: (color) => ({
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "3px",
-      background: color,
-      borderRadius: "16px 16px 0 0",
-    }),
-    statIcon: { fontSize: "22px", marginBottom: "8px" },
-    statValue: {
-      fontSize: "26px",
-      fontWeight: "900",
-      color: COLORS.text,
-      lineHeight: 1,
-      marginBottom: "4px",
-    },
-    statLabel: {
-      fontSize: "11px",
-      color: COLORS.textMuted,
-      letterSpacing: "0.5px",
-    },
-    // WEEK TRACKER
-    weekTracker: {
-      background: COLORS.bgCard,
-      borderRadius: "16px",
-      padding: "16px",
-      border: `1px solid ${COLORS.border}`,
-    },
-    weekRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    weekDay: (done, today) => ({
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "6px",
-    }),
-    weekDayLabel: (today) => ({
-      fontSize: "10px",
-      color: today ? COLORS.primaryLight : COLORS.textMuted,
-      fontWeight: today ? "700" : "400",
-      letterSpacing: "0.5px",
-    }),
-    weekDayCircle: (done, today) => ({
-      width: "36px",
-      height: "36px",
-      borderRadius: "50%",
-      background: done
-        ? `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryLight})`
-        : today
-        ? `${COLORS.primary}33`
-        : COLORS.bgCardLight,
-      border: today && !done ? `2px solid ${COLORS.primary}` : "2px solid transparent",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "14px",
-      color: done ? "#fff" : today ? COLORS.primaryLight : COLORS.textMuted,
-      fontWeight: done ? "700" : "400",
-      boxShadow: done ? `0 4px 12px ${COLORS.primary}44` : "none",
-    }),
-    // EXERCISE CARD
-    exerciseCard: {
-      background: COLORS.bgCard,
-      borderRadius: "16px",
-      padding: "16px",
-      border: `1px solid ${COLORS.border}`,
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      cursor: "pointer",
-      transition: "all 0.2s",
-      marginBottom: "10px",
-    },
-    exerciseEmoji: {
-      width: "54px",
-      height: "54px",
-      borderRadius: "14px",
-      background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "26px",
-      flexShrink: 0,
-      boxShadow: `0 4px 12px ${COLORS.primary}44`,
-    },
-    exerciseInfo: { flex: 1, minWidth: 0 },
-    exerciseName: {
-      fontSize: "15px",
-      fontWeight: "700",
-      color: COLORS.text,
-      marginBottom: "4px",
-    },
-    exerciseMeta: {
-      fontSize: "12px",
-      color: COLORS.textMuted,
-      marginBottom: "6px",
-    },
-    exerciseTags: { display: "flex", gap: "6px", flexWrap: "wrap" },
-    exerciseTag: (color) => ({
-      fontSize: "10px",
-      fontWeight: "600",
-      color: color || COLORS.primaryLight,
-      background: `${color || COLORS.primary}22`,
-      padding: "2px 8px",
-      borderRadius: "10px",
-      border: `1px solid ${color || COLORS.primary}44`,
-    }),
-    exerciseArrow: {
-      fontSize: "18px",
-      color: COLORS.textMuted,
-    },
-    // FILTER PILLS
-    filterRow: {
-      display: "flex",
-      gap: "8px",
-      marginBottom: "16px",
-      overflowX: "auto",
-      paddingBottom: "4px",
-    },
-    filterPill: (active) => ({
-      padding: "6px 16px",
-      borderRadius: "20px",
-      fontSize: "13px",
-      fontWeight: "600",
-      background: active
-        ? `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryLight})`
-        : COLORS.bgCard,
-      color: active ? "#fff" : COLORS.textMuted,
-      border: active ? "none" : `1px solid ${COLORS.border}`,
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      transition: "all 0.2s",
-      flexShrink: 0,
-      boxShadow: active ? `0 4px 12px ${COLORS.primary}44` : "none",
-    }),
-    // MEAL CARD
-    mealCard: (color) => ({
-      background: COLORS.bgCard,
-      borderRadius: "16px",
-      padding: "14px 16px",
-      border: `1px solid ${COLORS.border}`,
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      cursor: "pointer",
-      marginBottom: "10px",
-      borderLeft: `3px solid ${color}`,
-      transition: "all 0.2s",
-    }),
-    mealTime: {
-      fontSize: "11px",
-      color: COLORS.textMuted,
-      fontWeight: "600",
-      minWidth: "42px",
-    },
-    mealIcon: { fontSize: "24px" },
-    mealInfo: { flex: 1 },
-    mealName: {
-      fontSize: "14px",
-      fontWeight: "700",
-      color: COLORS.text,
-      marginBottom: "3px",
-    },
-    mealCals: {
-      fontSize: "12px",
-      color: COLORS.textMuted,
-    },
-    mealArrow: { fontSize: "16px", color: COLORS.textMuted },
-    // BOTTOM NAV
-    bottomNav: {
-      position: "fixed",
-      bottom: 0,
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: "100%",
-      maxWidth: "430px",
-      background: `${COLORS.bgCard}EE`,
-      backdropFilter: "blur(20px)",
-      borderTop: `1px solid ${COLORS.border}`,
-      display: "flex",
-      alignItems: "center",
-      padding: "8px 0 16px",
-      zIndex: 100,
-    },
-    navItem: (active) => ({
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "4px",
-      cursor: "pointer",
-      background: "none",
-      border: "none",
-      padding: "4px",
-    }),
-    navIcon: (active) => ({
-      fontSize: "22px",
-      filter: active ? "none" : "grayscale(100%) opacity(0.5)",
-      transition: "all 0.2s",
-      transform: active ? "scale(1.1)" : "scale(1)",
-    }),
-    navLabel: (active) => ({
-      fontSize: "10px",
-      color: active ? COLORS.primaryLight : COLORS.textMuted,
-      fontWeight: active ? "700" : "400",
-      letterSpacing: "0.3px",
-    }),
-    navActiveIndicator: (active) => ({
-      width: "4px",
-      height: "4px",
-      borderRadius: "50%",
-      background: active ? COLORS.primaryLight : "transparent",
-      marginBottom: "0px",
-    }),
-    // MODAL
-    modalOverlay: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.7)",
-      backdropFilter: "blur(4px)",
-      zIndex: 200,
-      display: "flex",
-      alignItems: "flex-end",
-    },
-    modalSheet: {
-      background: COLORS.bgCard,
-      borderRadius: "24px 24px 0 0",
-      padding: "24px",
-      width: "100%",
-      maxHeight: "85vh",
-      overflowY: "auto",
-      border: `1px solid ${COLORS.border}`,
-    },
-    modalHandle: {
-      width: "40px",
-      height: "4px",
-      borderRadius: "2px",
-      background: COLORS.border,
-      margin: "0 auto 20px",
-    },
-    modalTitle: {
-      fontSize: "22px",
-      fontWeight: "900",
-      color: COLORS.text,
-      marginBottom: "6px",
-    },
-    modalSubtitle: {
-      fontSize: "14px",
-      color: COLORS.textMuted,
-      marginBottom: "20px",
-      lineHeight: "1.5",
-    },
-    macroRow: {
-      display: "flex",
-      gap: "10px",
-      marginBottom: "20px",
-    },
-    macroBox: (color) => ({
-      flex: 1,
-      background: `${color}22`,
-      border: `1px solid ${color}44`,
-      borderRadius: "12px",
-      padding: "12px 8px",
-      textAlign: "center",
-    }),
-    macroValue: {
-      fontSize: "18px",
-      fontWeight: "800",
-      color: COLORS.text,
-      marginBottom: "2px",
-    },
-    macroLabel: {
-      fontSize: "10px",
-      color: COLORS.textMuted,
-      letterSpacing: "1px",
-      textTransform: "uppercase",
-    },
-    // PROFILE
-    profileHeader: {
-      padding: "40px 20px 20px",
-      textAlign: "center",
-    },
-    profileAvatar: {
-      width: "90px",
-      height: "90px",
-      borderRadius: "50%",
-      background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.secondary})`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "40px",
-      margin: "0 auto 16px",
-      boxShadow: `0 8px 24px ${COLORS.primary}66`,
-    },
-    profileName: {
-      fontSize: "24px",
-      fontWeight: "900",
-      color: COLORS.text,
-      marginBottom: "4px",
-    },
-    profileSub: {
-      fontSize: "13px",
-      color: COLORS.textMuted,
-    },
-    profileMenuSection: {
-      padding: "0 20px",
-      marginBottom: "16px",
-    },
-    profileMenuItem: {
-      background: COLORS.bgCard,
-      borderRadius: "14px",
-      padding: "14px 16px",
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      cursor: "pointer",
-      marginBottom: "8px",
-      border: `1px solid ${COLORS.border}`,
-    },
-    profileMenuIcon: {
-      width: "36px",
-      height: "36px",
-      borderRadius: "10px",
-      background: `${COLORS.primary}33`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "18px",
-    },
-    profileMenuLabel: {
-      flex: 1,
-      fontSize: "15px",
-      fontWeight: "600",
-      color: COLORS.text,
-    },
-    profileMenuArrow: {
-      fontSize: "14px",
-      color: COLORS.textMuted,
-    },
-    // WORKOUT TIMER
-    timerCard: {
-      background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`,
-      borderRadius: "20px",
-      padding: "24px",
-      margin: "20px",
-      textAlign: "center",
-      boxShadow: `0 12px 40px ${COLORS.primary}44`,
-    },
-    timerDisplay: {
-      fontSize: "64px",
-      fontWeight: "900",
-      color: "#fff",
-      letterSpacing: "2px",
-      marginBottom: "8px",
-      fontVariantNumeric: "tabular-nums",
-    },
-    timerLabel: {
-      fontSize: "13px",
-      color: "rgba(255,255,255,0.7)",
-      marginBottom: "20px",
-    },
-    timerBtns: {
-      display: "flex",
-      gap: "12px",
-      justifyContent: "center",
-    },
-    timerBtn: (variant) => ({
-      background:
-        variant === "start"
-          ? "rgba(255,255,255,0.25)"
-          : "rgba(255,255,255,0.1)",
-      border: "2px solid rgba(255,255,255,0.3)",
-      borderRadius: "14px",
-      padding: "12px 24px",
-      fontSize: "15px",
-      fontWeight: "700",
-      color: "#fff",
-      cursor: "pointer",
-    }),
-  };
-
-  const tabs = [
-    { id: "home", icon: "🏠", label: "Início" },
-    { id: "workout", icon: "💪", label: "Treinos" },
-    { id: "nutrition", icon: "🥗", label: "Nutrição" },
-    { id: "progress", icon: "📊", label: "Progresso" },
-    { id: "profile", icon: "👤", label: "Perfil" },
-  ];
-
-  const renderHome = () => (
-    <div style={styles.scrollArea}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={styles.headerGreet}>Bom dia, 👋</div>
-          <div style={styles.headerName}>Bem-vindo!</div>
-        </div>
-        <div style={styles.headerAvatar}>🧘</div>
-      </div>
-
-      {/* Hero Card */}
-      <div style={styles.heroCard}>
-        <div style={styles.heroGlow} />
-        <div style={styles.heroTag}>TREINO DE HOJE</div>
-        <div style={styles.heroTitle}>Wall Pilates{"\n"}Iniciante</div>
-        <div style={styles.heroSub}>30 min · 6 exercícios</div>
-        <div style={styles.heroMetaRow}>
-          <div style={styles.heroMeta}>🔥 240 kcal</div>
-          <div style={styles.heroMeta}>⭐ 4.9</div>
-          <div style={styles.heroMeta}>👥 12k</div>
-        </div>
-        <div style={styles.heroEmoji}>🧘‍♀️</div>
-        <button
-          style={{ ...styles.btn("secondary"), marginTop: "16px", width: "auto", padding: "10px 20px", fontSize: "14px", border: "2px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.15)", color: "#fff" }}
-          onClick={() => setActiveTab("workout")}
-        >
-          Começar Treino →
-        </button>
-      </div>
-
-      {/* Week Tracker */}
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <div style={styles.sectionTitle}>Sua Semana</div>
-          <span style={{ fontSize: "12px", color: COLORS.textMuted }}>5/7 dias ✨</span>
-        </div>
-        <div style={styles.weekTracker}>
-          <div style={styles.weekRow}>
-            {weekDays.map((d, i) => {
-              const done = completedDays.includes(i);
-              const today = i === 4;
-              return (
-                <div key={d} style={styles.weekDay(done, today)}>
-                  <div style={styles.weekDayCircle(done, today)}>
-                    {done ? "✓" : today ? "•" : d.charAt(0)}
-                  </div>
-                  <div style={styles.weekDayLabel(today)}>{d}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <div style={styles.sectionTitle}>Estatísticas</div>
-        </div>
-        <div style={styles.statsGrid}>
-          {stats.map((s) => (
-            <div key={s.label} style={styles.statCard(s.color)}>
-              <div style={styles.statAccent(s.color)} />
-              <div style={styles.statIcon}>{s.icon}</div>
-              <div style={styles.statValue}>{s.value}</div>
-              <div style={styles.statLabel}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Exercises */}
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <div style={styles.sectionTitle}>Exercícios Rápidos</div>
-          <button style={styles.sectionLink} onClick={() => setActiveTab("workout")}>
-            Ver todos
-          </button>
-        </div>
-        {exercises.slice(0, 3).map((ex) => (
-          <div
-            key={ex.id}
-            style={styles.exerciseCard}
-            onClick={() => setSelectedExercise(ex)}
-          >
-            <div style={styles.exerciseEmoji}>{ex.emoji}</div>
-            <div style={styles.exerciseInfo}>
-              <div style={styles.exerciseName}>{ex.name}</div>
-              <div style={styles.exerciseMeta}>
-                {ex.duration} · {ex.reps}
-              </div>
-              <div style={styles.exerciseTags}>
-                {ex.muscles.map((m) => (
-                  <span key={m} style={styles.exerciseTag()}>
-                    {m}
-                  </span>
-                ))}
-                <span
-                  style={styles.exerciseTag(
-                    ex.level === "Iniciante"
-                      ? COLORS.success
-                      : ex.level === "Intermediário"
-                      ? COLORS.warning
-                      : COLORS.danger
-                  )}
-                >
-                  {ex.level}
-                </span>
-              </div>
-            </div>
-            <div style={styles.exerciseArrow}>›</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderWorkout = () => (
-    <div style={styles.scrollArea}>
-      <div style={{ padding: "20px 20px 0" }}>
-        <div style={styles.sectionTitle}>Treinos Wall Pilates</div>
-        <div style={{ fontSize: "13px", color: COLORS.textMuted, marginTop: "4px", marginBottom: "16px" }}>
-          Exercícios com suporte de parede
-        </div>
-
-        {/* Timer Card */}
-        <div style={styles.timerCard}>
-          <div style={styles.timerDisplay}>
-            {String(Math.floor(workoutTimer / 60)).padStart(2, "0")}:
-            {String(workoutTimer % 60).padStart(2, "0")}
-          </div>
-          <div style={styles.timerLabel}>Tempo de Treino</div>
-          <div style={styles.timerBtns}>
-            <button
-              style={styles.timerBtn("start")}
-              onClick={() => {
-                if (activeWorkout) {
-                  setActiveWorkout(false);
-                } else {
-                  setActiveWorkout(true);
-                  const interval = setInterval(() => {
-                    setWorkoutTimer((t) => t + 1);
-                  }, 1000);
-                  // TODO: armazenar referência do interval para limpar corretamente
-                }
-              }}
-            >
-              {activeWorkout ? "⏸ Pausar" : "▶ Iniciar"}
-            </button>
-            <button
-              style={styles.timerBtn("reset")}
-              onClick={() => {
-                setWorkoutTimer(0);
-                setActiveWorkout(false);
-              }}
-            >
-              ↺ Reset
-            </button>
-          </div>
-        </div>
-
-        {/* Filter */}
-        <div style={styles.filterRow}>
-          {["Todos", "Iniciante", "Intermediário", "Avançado"].map((f) => (
-            <button
-              key={f}
-              style={styles.filterPill(filterLevel === f)}
-              onClick={() => setFilterLevel(f)}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {/* Exercise List */}
-        {filteredExercises.map((ex) => (
-          <div
-            key={ex.id}
-            style={styles.exerciseCard}
-            onClick={() => setSelectedExercise(ex)}
-          >
-            <div style={styles.exerciseEmoji}>{ex.emoji}</div>
-            <div style={styles.exerciseInfo}>
-              <div style={styles.exerciseName}>{ex.name}</div>
-              <div style={styles.exerciseMeta}>
-                {ex.duration} · {ex.reps} · 🔥 {ex.calories} kcal
-              </div>
-              <div style={styles.exerciseTags}>
-                {ex.muscles.map((m) => (
-                  <span key={m} style={styles.exerciseTag()}>
-                    {m}
-                  </span>
-                ))}
-                <span
-                  style={styles.exerciseTag(
-                    ex.level === "Iniciante"
-                      ? COLORS.success
-                      : ex.level === "Intermediário"
-                      ? COLORS.warning
-                      : COLORS.danger
-                  )}
-                >
-                  {ex.level}
-                </span>
-              </div>
-            </div>
-            <div style={styles.exerciseArrow}>›</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderNutrition = () => {
-    const totalCals = mealPlans.reduce((a, m) => a + m.calories, 0);
-    const goalCals = 1800;
-    const pct = Math.round((totalCals / goalCals) * 100);
-
-    return (
-      <div style={styles.scrollArea}>
-        <div style={{ padding: "20px 20px 0" }}>
-          <div style={styles.sectionTitle}>Plano Alimentar</div>
-          <div style={{ fontSize: "13px", color: COLORS.textMuted, marginTop: "4px", marginBottom: "16px" }}>
-            Nutrição balanceada para seus objetivos
-          </div>
-
-          {/* Calorie Progress */}
-          <div
-            style={{
-              background: COLORS.bgCard,
-              borderRadius: "16px",
-              padding: "20px",
-              border: `1px solid ${COLORS.border}`,
-              marginBottom: "20px",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-              <div>
-                <div style={{ fontSize: "13px", color: COLORS.textMuted }}>Calorias Hoje</div>
-                <div style={{ fontSize: "28px", fontWeight: "900", color: COLORS.text }}>
-                  {totalCals}
-                  <span style={{ fontSize: "14px", color: COLORS.textMuted, fontWeight: "400" }}>
-                    {" "}/ {goalCals} kcal
-                  </span>
-                </div>
-              </div>
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  background: `conic-gradient(${COLORS.primary} ${pct * 3.6}deg, ${COLORS.border} 0deg)`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                }}
-              >
-                <div
-                  style={{
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "50%",
-                    background: COLORS.bgCard,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    fontWeight: "700",
-                    color: COLORS.primaryLight,
-                  }}
-                >
-                  {pct}%
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                height: "6px",
-                borderRadius: "3px",
-                background: COLORS.border,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${pct}%`,
-                  height: "100%",
-                  background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.primaryLight})`,
-                  borderRadius: "3px",
-                  transition: "width 0.5s",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Meals */}
-          {mealPlans.map((meal) => (
-            <div
-              key={meal.time}
-              style={styles.mealCard(meal.color)}
-              onClick={() => setSelectedMeal(meal)}
-            >
-              <div style={styles.mealTime}>{meal.time_short}</div>
-              <div style={styles.mealIcon}>{meal.icon}</div>
-              <div style={styles.mealInfo}>
-                <div style={styles.mealName}>{meal.meal}</div>
-                <div style={styles.mealCals}>{meal.time} · {meal.calories} kcal</div>
-              </div>
-              <div style={styles.mealArrow}>›</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderProgress = () => (
-    <div style={styles.scrollArea}>
-      <div style={{ padding: "20px 20px 0" }}>
-        <div style={styles.sectionTitle}>Meu Progresso</div>
-        <div style={{ fontSize: "13px", color: COLORS.textMuted, marginTop: "4px", marginBottom: "20px" }}>
-          Continue assim! Você está indo muito bem 🌟
-        </div>
-
-        {/* Achievement Banner */}
-        <div
-          style={{
-            background: `linear-gradient(135deg, ${COLORS.warning}33, ${COLORS.warning}11)`,
-            border: `1px solid ${COLORS.warning}44`,
-            borderRadius: "16px",
-            padding: "16px",
-            marginBottom: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-          }}
-        >
-          <div style={{ fontSize: "40px" }}>🏆</div>
-          <div>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: COLORS.text, marginBottom: "4px" }}>
-              7 Dias Consecutivos!
-            </div>
-            <div style={{ fontSize: "12px", color: COLORS.textMuted }}>
-              Você conquistou o distintivo "Semana Perfeita"
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Full */}
-        <div style={styles.statsGrid}>
-          {stats.map((s) => (
-            <div key={s.label} style={styles.statCard(s.color)}>
-              <div style={styles.statAccent(s.color)} />
-              <div style={styles.statIcon}>{s.icon}</div>
-              <div style={styles.statValue}>{s.value}</div>
-              <div style={styles.statLabel}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Progress Bars */}
-        <div
-          style={{
-            background: COLORS.bgCard,
-            borderRadius: "16px",
-            padding: "20px",
-            border: `1px solid ${COLORS.border}`,
-            marginTop: "16px",
-            marginBottom: "16px",
-          }}
-        >
-          <div style={{ fontSize: "15px", fontWeight: "700", color: COLORS.text, marginBottom: "16px" }}>
-            Metas da Semana
-          </div>
-          {[
-            { label: "Treinos Realizados", value: 5, max: 7, color: COLORS.primary },
-            { label: "Meta de Calorias", value: 80, max: 100, color: COLORS.secondary, unit: "%" },
-            { label: "Hidratação", value: 6, max: 8, color: COLORS.accent, unit: "copos" },
-            { label: "Horas de Sono", value: 7, max: 8, color: COLORS.warning, unit: "h" },
-          ].map((item) => (
-            <div key={item.label} style={{ marginBottom: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ fontSize: "13px", color: COLORS.textLight }}>{item.label}</span>
-                <span style={{ fontSize: "13px", fontWeight: "700", color: COLORS.text }}>
-                  {item.value}/{item.max} {item.unit || ""}
-                </span>
-              </div>
-              <div style={{ height: "8px", borderRadius: "4px", background: COLORS.border, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${(item.value / item.max) * 100}%`,
-                    height: "100%",
-                    background: `linear-gradient(90deg, ${item.color}, ${item.color}BB)`,
-                    borderRadius: "4px",
-                    transition: "width 0.5s",
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Achievements */}
-        <div style={{ fontSize: "16px", fontWeight: "700", color: COLORS.text, marginBottom: "12px" }}>
-          Conquistas
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-          {[
-            { emoji: "🔥", label: "7 Dias", unlocked: true },
-            { emoji: "💪", label: "20 Treinos", unlocked: true },
-            { emoji: "🧘", label: "Pilates Pro", unlocked: true },
-            { emoji: "⚡", label: "Maratonista", unlocked: false },
-            { emoji: "🌟", label: "30 Dias", unlocked: false },
-            { emoji: "🏅", label: "Elite", unlocked: false },
-          ].map((a) => (
-            <div
-              key={a.label}
-              style={{
-                background: a.unlocked ? `${COLORS.primary}22` : COLORS.bgCard,
-                border: `1px solid ${a.unlocked ? COLORS.primary + "44" : COLORS.border}`,
-                borderRadius: "14px",
-                padding: "14px 8px",
-                textAlign: "center",
-                opacity: a.unlocked ? 1 : 0.5,
-              }}
-            >
-              <div style={{ fontSize: "28px", marginBottom: "6px", filter: a.unlocked ? "none" : "grayscale(1)" }}>
-                {a.emoji}
-              </div>
-              <div style={{ fontSize: "11px", color: a.unlocked ? COLORS.textLight : COLORS.textMuted, fontWeight: "600" }}>
-                {a.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderProfile = () => (
-    <div style={styles.scrollArea}>
-      <div style={styles.profileHeader}>
-        <div style={styles.profileAvatar}>🧘</div>
-        <div style={styles.profileName}>Meu Perfil</div>
-        <div style={styles.profileSub}>Josue Business & Developing LLC</div>
-        <div
-          style={{
-            display: "inline-block",
-            marginTop: "8px",
-            background: `${COLORS.primary}33`,
-            border: `1px solid ${COLORS.primary}44`,
-            borderRadius: "20px",
-            padding: "4px 14px",
-            fontSize: "12px",
-            color: COLORS.primaryLight,
-            fontWeight: "600",
-          }}
-        >
-          ✨ Plano Premium
-        </div>
-      </div>
-
-      <div style={styles.profileMenuSection}>
-        <div style={{ fontSize: "11px", color: COLORS.textMuted, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px", paddingLeft: "4px" }}>
-          Minha Conta
-        </div>
-        {[
-          { icon: "👤", label: "Dados Pessoais" },
-          { icon: "🎯", label: "Meus Objetivos" },
-          { icon: "📏", label: "Medidas Corporais" },
-          { icon: "🔔", label: "Notificações" },
-        ].map((item) => (
-          <div key={item.label} style={styles.profileMenuItem}>
-            <div style={styles.profileMenuIcon}>{item.icon}</div>
-            <div style={styles.profileMenuLabel}>{item.label}</div>
-            <div style={styles.profileMenuArrow}>›</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={styles.profileMenuSection}>
-        <div style={{ fontSize: "11px", color: COLORS.textMuted, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px", paddingLeft: "4px" }}>
-          Preferências
-        </div>
-        {[
-          { icon: "🌐", label: "Idioma: Português (BR)" },
-          { icon: "⚙️", label: "Configurações" },
-          { icon: "🔒", label: "Privacidade" },
-          { icon: "❓", label: "Ajuda e Suporte" },
-        ].map((item) => (
-          <div key={item.label} style={styles.profileMenuItem}>
-            <div style={styles.profileMenuIcon}>{item.icon}</div>
-            <div style={styles.profileMenuLabel}>{item.label}</div>
-            <div style={styles.profileMenuArrow}>›</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ padding: "0 20px 20px" }}>
-        <div
-          style={{
-            background: `${COLORS.danger}11`,
-            border: `1px solid ${COLORS.danger}33`,
-            borderRadius: "14px",
-            padding: "14px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-            cursor: "pointer",
-          }}
-        >
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: `${COLORS.danger}22`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "18px",
-            }}
-          >
-            🚪
-          </div>
-          <div style={{ flex: 1, fontSize: "15px", fontWeight: "600", color: COLORS.danger }}>
-            Sair da Conta
-          </div>
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: "24px", fontSize: "11px", color: COLORS.textMuted }}>
-          CORPOLEVE - WALL PILATES v1.0.0{"\n"}
-          <br />
-          © 2024 Josue Business & Developing LLC
-        </div>
-      </div>
-    </div>
-  );
-
-  // SPLASH SCREEN
-  if (screen === "splash") {
-    return (
-      <div style={styles.app}>
-        <div style={styles.splash}>
-          <div style={styles.splashGlow} />
-          <div style={styles.splashLogo}>🧘</div>
-          <div style={styles.splashBrand}>Josue Business & Developing LLC</div>
-          <div style={styles.splashTitle}>CORPOLEVE</div>
-          <div style={{ fontSize: "16px", fontWeight: "600", color: COLORS.primaryLight, marginBottom: "4px", letterSpacing: "4px" }}>
-            WALL PILATES
-          </div>
-          <div style={styles.splashSubtitle}>
-            Transforme seu corpo com exercícios de parede. Pilates acessível para todos os níveis.
-          </div>
-          <div style={styles.splashFeatures}>
-            {[
-              { icon: "🏋️", text: "Treinos personalizados de Wall Pilates" },
-              { icon: "🥗", text: "Planos alimentares balanceados" },
-              { icon: "📊", text: "Acompanhamento de progresso em tempo real" },
-            ].map((f) => (
-              <div key={f.text} style={styles.splashFeatureItem}>
-                <div style={styles.splashFeatureIcon}>{f.icon}</div>
-                <div style={styles.splashFeatureText}>{f.text}</div>
-              </div>
-            ))}
-          </div>
-          <button style={styles.btn("primary")} onClick={handleSplash}>
-            Começar Agora →
-          </button>
-          <div style={{ marginTop: "16px", fontSize: "12px", color: COLORS.textMuted }}>
-            Já tem uma conta?{" "}
-            <span style={{ color: COLORS.primaryLight, fontWeight: "600", cursor: "pointer" }} onClick={() => setScreen("home")}>
-              Entrar
-            </span>
-          </div>
-        </div>
-      </div>
-    );
+    return true;
   }
 
-  // ONBOARDING
-  if (screen === "onboarding") {
-    return (
-      <div style={styles.app}>
-        <div style={styles.onboarding}>
-          <div style={styles.onboardingImage}>
-            <div style={styles.onboardingBadge}>CORPOLEVE · WALL PILATES</div>
-            <span style={{ filter: "drop-shadow(0 0 30px rgba(255,255,255,0.3))", zIndex: 1 }}>
-              🧘‍♀️
-            </span>
-            {/* Decorative circles */}
-            <div style={{ position: "absolute", width: "200px", height: "200px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.1)", bottom: "-50px", right: "-50px" }} />
-            <div style={{ position: "absolute", width: "150px", height: "150px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.08)", top: "30px", left: "-30px" }} />
+  function handleLogout() {
+    setScreen("splash");
+    setSplashFade(false);
+    setTimeout(() => setCurrentUser(null), 50);
+  }
+
+  function addAccess(email) {
+    const norm = email.toLowerCase().trim();
+    if (norm && !accessList.includes(norm)) {
+      setAccessList([...accessList, norm]);
+    }
+  }
+
+  function removeAccess(email) {
+    if (email === ADMIN_EMAIL) return; // nunca remove o admin
+    setAccessList(accessList.filter(e => e !== email));
+  }
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const t = setTimeout(() => setSplashFade(true), 2200);
+    const t2 = setTimeout(() => setScreen("main"), 2800);
+    return () => { clearTimeout(t); clearTimeout(t2); };
+  }, [currentUser]);
+
+  // Se não está logado, mostra tela de login
+  if (!currentUser) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  function toggleEx(day, exId) {
+    const key = `${day}-${exId}`;
+    setCompletedEx(prev => ({ ...prev, [key]: !prev[key] }));
+  }
+  function toggleMeal(day, mealType) {
+    const key = `${day}-${mealType}`;
+    setCompletedMeals(prev => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  const dayData = PLAN_28[selectedDay - 1];
+  const totalCompletedDays = PLAN_28.filter((d, i) => {
+    if (d.isRest) return true;
+    const exDone = d.exercises.every(id => completedEx[`${d.day}-${id}`]);
+    const mealsDone = ["breakfast", "morningSnack", "lunch", "afternoonSnack", "dinner"].every(m => completedMeals[`${d.day}-${m}`]);
+    return exDone && mealsDone;
+  }).length;
+
+  if (screen === "splash") return <Splash fade={splashFade} />;
+
+  return (
+    <div style={{ maxWidth: 430, margin: "0 auto", minHeight: "100vh", background: C.bg, fontFamily: "'Segoe UI', system-ui, sans-serif", position: "relative", paddingBottom: 80 }}>
+      {showFoodList && <FoodListModal onClose={() => setShowFoodList(false)} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />}
+      {expandedMeal && <MealDetailModal meal={expandedMeal} dayKey={selectedDay} mealType={expandedMeal._type} completed={completedMeals[`${selectedDay}-${expandedMeal._type}`]} onToggle={() => { toggleMeal(selectedDay, expandedMeal._type); setExpandedMeal(null); }} onClose={() => setExpandedMeal(null)} />}
+      {expandedEx && <ExerciseDetailModal ex={EXERCISES[expandedEx]} dayKey={selectedDay} completed={completedEx[`${selectedDay}-${expandedEx}`]} onToggle={() => { toggleEx(selectedDay, expandedEx); setExpandedEx(null); }} onClose={() => setExpandedEx(null)} />}
+      {showAdminPanel && isAdmin && <AdminPanelModal accessList={accessList} onAdd={addAccess} onRemove={removeAccess} onClose={() => setShowAdminPanel(false)} />}
+
+      {/* CONTEÚDO POR ABA */}
+      {tab === "plano" && <TabPlano selectedDay={selectedDay} setSelectedDay={setSelectedDay} completedEx={completedEx} completedMeals={completedMeals} totalCompletedDays={totalCompletedDays} onGoWorkout={() => setTab("treinos")} onGoFood={() => setTab("comidas")} />}
+      {tab === "treinos" && <TabTreinos dayData={dayData} selectedDay={selectedDay} completedEx={completedEx} onToggleEx={toggleEx} onExpandEx={setExpandedEx} />}
+      {tab === "comidas" && <TabComidas dayData={dayData} selectedDay={selectedDay} completedMeals={completedMeals} onToggleMeal={toggleMeal} onExpandMeal={(meal, type) => setExpandedMeal({ ...meal, _type: type })} onShowFoodList={() => setShowFoodList(true)} />}
+      {tab === "progresso" && <TabProgresso completedEx={completedEx} completedMeals={completedMeals} totalCompletedDays={totalCompletedDays} />}
+      {tab === "perfil" && <TabPerfil currentUser={currentUser} isAdmin={isAdmin} onLogout={handleLogout} onOpenAdmin={() => setShowAdminPanel(true)} />}
+
+      {/* BARRA DE NAVEGAÇÃO */}
+      <BottomNav tab={tab} setTab={setTab} />
+    </div>
+  );
+}
+
+// ─── SPLASH ──────────────────────────────────────────────────────────────────
+function Splash({ fade }) {
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #FAF0E0 0%, #F5E6D0 50%, #EEDAD8 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, opacity: fade ? 0 : 1, transition: "opacity 0.6s ease", maxWidth: 430, margin: "0 auto" }}>
+      <div style={{ width: 100, height: 100, borderRadius: 28, background: "linear-gradient(135deg, #C17D3C, #8B5E2A)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 12px 40px rgba(193,125,60,0.35)" }}>
+        <span style={{ fontSize: 50 }}>🧘‍♀️</span>
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#1A1A1A", margin: 0, letterSpacing: -1 }}>CorpoVivo</h1>
+        <p style={{ margin: "6px 0 0", color: "#8B7355", fontSize: 15 }}>Pilates em Casa · 28 Dias</p>
+      </div>
+      <div style={{ width: 40, height: 4, borderRadius: 2, background: "#C17D3C", marginTop: 20, animation: "pulse 1s infinite" }} />
+    </div>
+  );
+}
+
+// ─── ABA: PLANO ───────────────────────────────────────────────────────────────
+function TabPlano({ selectedDay, setSelectedDay, completedEx, completedMeals, totalCompletedDays, onGoWorkout, onGoFood }) {
+  const todayData = PLAN_28[selectedDay - 1];
+  const exDone = todayData.exercises.every(id => completedEx[`${selectedDay}-${id}`]);
+  const mealTypes = ["breakfast", "morningSnack", "lunch", "afternoonSnack", "dinner"];
+  const mealsDone = mealTypes.every(m => completedMeals[`${selectedDay}-${m}`]);
+  const dayCompletePct = Math.round((totalCompletedDays / 28) * 100);
+
+  return (
+    <div style={{ padding: "20px 16px 10px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.text }}>Meu Plano</h2>
+          <p style={{ margin: "2px 0 0", color: C.textMuted, fontSize: 14 }}>28 Dias de Transformação</p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: C.accent }}>{totalCompletedDays}/28</div>
+          <div style={{ fontSize: 12, color: C.textMuted }}>dias</div>
+        </div>
+      </div>
+
+      {/* Barra de progresso */}
+      <div style={{ background: C.border, borderRadius: 8, height: 8, marginBottom: 22, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${dayCompletePct}%`, background: `linear-gradient(90deg, ${C.accent}, #D4956A)`, borderRadius: 8, transition: "width 0.5s ease" }} />
+      </div>
+
+      {/* Grade de 28 dias */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, marginBottom: 24 }}>
+        {PLAN_28.map((d) => {
+          const exDoneDay = d.isRest || d.exercises.every(id => completedEx[`${d.day}-${id}`]);
+          const mealsDoneDay = mealTypes.every(m => completedMeals[`${d.day}-${m}`]);
+          const fullyDone = d.isRest ? exDoneDay : (exDoneDay && mealsDoneDay);
+          const isSelected = d.day === selectedDay;
+          return (
+            <button key={d.day} onClick={() => setSelectedDay(d.day)} style={{ aspectRatio: "1", borderRadius: "50%", border: isSelected ? `3px solid ${C.accent}` : `2px solid ${fullyDone ? C.green : C.border}`, background: isSelected ? C.accent : fullyDone ? C.greenLight : d.isRest ? C.rest : C.card, color: isSelected ? "#FFF" : fullyDone ? C.green : d.isRest ? C.restText : C.textMuted, fontSize: 13, fontWeight: isSelected ? 700 : 500, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+              {fullyDone && !isSelected ? "✓" : d.day}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Card do dia selecionado */}
+      <div style={{ background: C.card, borderRadius: 18, padding: 20, marginBottom: 14, boxShadow: `0 2px 16px ${C.shadow}`, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Semana {todayData.week} · Dia {todayData.day}</div>
+            <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: C.text }}>{todayData.title}</h3>
           </div>
-          <div style={styles.onboardingContent}>
-            <div style={styles.onboardingTag}>🌟 Bem-vinda ao Corpoleve</div>
-            <div style={styles.onboardingTitle}>
-              Wall Pilates para Todos os Níveis
-            </div>
-            <div style={styles.onboardingDesc}>
-              Exercícios seguros e eficazes usando apenas uma parede. Fortaleça o core, melhore a postura e ganhe flexibilidade no conforto da sua casa.
-            </div>
-            <div style={styles.pillsRow}>
-              {["🧘 Flexibilidade", "💪 Força", "⚖️ Equilíbrio", "🌿 Bem-estar"].map((p) => (
-                <div key={p} style={styles.pill}>{p}</div>
+          {todayData.isRest ? (
+            <span style={{ background: C.rest, color: C.restText, borderRadius: 20, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>Descanso</span>
+          ) : (
+            <span style={{ background: C.accentLight, color: C.accent, borderRadius: 20, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>{todayData.duration}</span>
+          )}
+        </div>
+
+        {!todayData.isRest && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+              {todayData.exercises.map(id => (
+                <span key={id} style={{ background: exDone ? C.greenLight : C.cardAlt, color: exDone ? C.green : C.textMuted, borderRadius: 10, padding: "4px 10px", fontSize: 12, fontWeight: 500 }}>
+                  {completedEx[`${selectedDay}-${id}`] ? "✓ " : ""}{EXERCISES[id].name}
+                </span>
               ))}
             </div>
-            <button style={styles.btn("primary")} onClick={handleOnboarding}>
-              Personalizar meu plano →
+            <button onClick={onGoWorkout} style={{ width: "100%", padding: "13px", background: exDone ? C.greenLight : C.primary, color: exDone ? C.green : "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", letterSpacing: 0.5 }}>
+              {exDone ? "✓ Treino Concluído" : "IR AO TREINO"}
             </button>
-            <button
-              style={{ ...styles.btn("secondary"), marginTop: "10px" }}
-              onClick={() => setScreen("home")}
-            >
-              Pular
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // QUIZ
-  if (screen === "quiz") {
-    const q = quizQuestions[quizStep];
-    return (
-      <div style={styles.app}>
-        <div style={styles.quiz}>
-          {/* Progress */}
-          <div style={styles.quizProgress}>
-            {quizQuestions.map((_, i) => (
-              <div
-                key={i}
-                style={styles.quizProgressBar(i === quizStep, i < quizStep)}
-              />
-            ))}
-          </div>
-
-          <div style={styles.quizHeader}>
-            <div style={styles.quizStep}>
-              Pergunta {quizStep + 1} de {quizQuestions.length}
-            </div>
-            <div style={styles.quizQuestion}>{q.question}</div>
-          </div>
-
-          <div style={styles.quizOptions}>
-            {q.options.map((opt) => (
-              <button
-                key={opt.label}
-                style={styles.quizOption(false)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `${COLORS.primary}33`;
-                  e.currentTarget.style.borderColor = COLORS.primary;
-                  e.currentTarget.style.transform = "scale(1.03)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = COLORS.bgCard;
-                  e.currentTarget.style.borderColor = COLORS.border;
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-                onClick={() => handleQuizAnswer(opt.label)}
-              >
-                <div style={styles.quizOptionIcon}>{opt.icon}</div>
-                <div style={styles.quizOptionLabel}>{opt.label}</div>
-              </button>
-            ))}
-          </div>
-
-          <button
-            style={{ ...styles.btn("secondary"), marginTop: "24px", fontSize: "14px", padding: "12px" }}
-            onClick={() => quizStep > 0 ? setQuizStep(quizStep - 1) : setScreen("onboarding")}
-          >
-            ← Voltar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // MAIN APP
-  return (
-    <div style={styles.app}>
-      {/* Page Title Bar */}
-      <div
-        style={{
-          padding: "16px 20px 0",
-          background: `${COLORS.bg}CC`,
-          backdropFilter: "blur(10px)",
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          borderBottom: activeTab !== "home" ? `1px solid ${COLORS.border}` : "none",
-        }}
-      >
-        {activeTab !== "home" && (
-          <div style={{ paddingBottom: "12px" }}>
-            <div
-              style={{
-                fontSize: "11px",
-                color: COLORS.textMuted,
-                letterSpacing: "2px",
-                textTransform: "uppercase",
-                marginBottom: "2px",
-              }}
-            >
-              CORPOLEVE
-            </div>
-            <div style={{ fontSize: "20px", fontWeight: "900", color: COLORS.text }}>
-              {tabs.find((t) => t.id === activeTab)?.label}
-            </div>
-          </div>
+          </>
         )}
       </div>
 
-      {/* Content */}
-      <div>
-        {activeTab === "home" && renderHome()}
-        {activeTab === "workout" && renderWorkout()}
-        {activeTab === "nutrition" && renderNutrition()}
-        {activeTab === "progress" && renderProgress()}
-        {activeTab === "profile" && renderProfile()}
+      {/* Card de nutrição do dia */}
+      <div style={{ background: C.card, borderRadius: 18, padding: 20, boxShadow: `0 2px 16px rgba(0,0,0,0.06)`, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text }}>Alimentação de Hoje</h3>
+          <span style={{ background: C.accentLight, color: C.accent, borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>{todayData.totalCals} kcal</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14 }}>
+          {[["🥩 Prot.", `${todayData.totalProt}g`], ["🌾 Carbs", `${todayData.totalCarbs}g`], ["🥑 Gordura", `${todayData.totalFat}g`]].map(([label, val]) => (
+            <div key={label} style={{ textAlign: "center", background: C.cardAlt, borderRadius: 12, padding: "10px 6px" }}>
+              <div style={{ fontSize: 18, marginBottom: 2 }}>{label.split(" ")[0]}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{val}</div>
+              <div style={{ fontSize: 11, color: C.textMuted }}>{label.split(" ")[1]}</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={onGoFood} style={{ width: "100%", padding: "13px", background: mealsDone ? C.greenLight : C.primary, color: mealsDone ? C.green : "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", letterSpacing: 0.5 }}>
+          {mealsDone ? "✓ Alimentação Registrada" : "VER REFEIÇÕES"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── ABA: TREINOS ─────────────────────────────────────────────────────────────
+function TabTreinos({ dayData, selectedDay, completedEx, onToggleEx, onExpandEx }) {
+  const exercisesDone = dayData.exercises.filter(id => completedEx[`${selectedDay}-${id}`]).length;
+  const total = dayData.exercises.length;
+
+  return (
+    <div style={{ padding: "20px 16px 10px" }}>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.text }}>Treinos</h2>
+        <p style={{ margin: "2px 0 0", color: C.textMuted, fontSize: 14 }}>Dia {selectedDay} · {dayData.title}</p>
       </div>
 
-      {/* Bottom Nav */}
-      <div style={styles.bottomNav}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            style={styles.navItem(activeTab === tab.id)}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <div style={styles.navActiveIndicator(activeTab === tab.id)} />
-            <div style={styles.navIcon(activeTab === tab.id)}>{tab.icon}</div>
-            <div style={styles.navLabel(activeTab === tab.id)}>{tab.label}</div>
-          </button>
+      {/* Progresso do dia */}
+      {!dayData.isRest && (
+        <div style={{ background: C.card, borderRadius: 16, padding: 16, marginBottom: 18, display: "flex", alignItems: "center", gap: 14, border: `1px solid ${C.border}` }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: exercisesDone === total ? C.greenLight : C.accentLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 22 }}>{exercisesDone === total ? "🏆" : "🏋️‍♀️"}</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{exercisesDone}/{total} exercícios concluídos</div>
+            <div style={{ marginTop: 6, background: C.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${total ? (exercisesDone / total) * 100 : 0}%`, background: exercisesDone === total ? C.green : C.accent, borderRadius: 4, transition: "width 0.3s" }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 13, color: C.accent, fontWeight: 700 }}>{dayData.duration}</div>
+        </div>
+      )}
+
+      {dayData.isRest ? (
+        <div style={{ textAlign: "center", padding: "40px 20px", background: C.rest, borderRadius: 20, marginBottom: 18 }}>
+          <div style={{ fontSize: 60, marginBottom: 12 }}>🌸</div>
+          <h3 style={{ margin: "0 0 8px", color: C.restText, fontSize: 20, fontWeight: 800 }}>Dia de Descanso Ativo</h3>
+          <p style={{ margin: 0, color: "#5B8DB0", fontSize: 15, lineHeight: 1.5 }}>Seu corpo precisa se recuperar para crescer mais forte. Faça caminhada leve, alongamentos ou simplesmente descanse. Você merece! 💆‍♀️</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {dayData.exercises.map((id) => {
+            const ex = EXERCISES[id];
+            const done = completedEx[`${selectedDay}-${id}`];
+            return (
+              <div key={id} style={{ background: C.card, borderRadius: 16, overflow: "hidden", border: `1px solid ${done ? C.green : C.border}`, boxShadow: `0 2px 10px rgba(0,0,0,0.05)` }}>
+                <div style={{ display: "flex", gap: 0 }}>
+                  <div style={{ width: 110, height: 110, flexShrink: 0, position: "relative" }}>
+                    <img src={ex.image} alt={ex.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
+                    {done && <div style={{ position: "absolute", inset: 0, background: "rgba(39,174,96,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 32, color: "#fff" }}>✓</span></div>}
+                  </div>
+                  <div style={{ flex: 1, padding: "12px 12px 8px" }}>
+                    <div style={{ fontSize: 13, color: C.accent, fontWeight: 600, marginBottom: 2 }}>{ex.muscle}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 6, lineHeight: 1.2 }}>{ex.name}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>⏱ {ex.duration}</span>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>🔁 {ex.sets}</span>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>🔥 {ex.calories} kcal</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button onClick={() => onExpandEx(id)} style={{ flex: 1, padding: "7px", background: C.cardAlt, color: C.textMuted, borderRadius: 20, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        VER DETALHES ›
+                      </button>
+                      <button onClick={() => onToggleEx(selectedDay, id)} style={{ flex: 1, padding: "7px", background: done ? C.green : C.primary, color: "#FFF", borderRadius: 20, border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                        {done ? "✓ FEITO" : "+ REGISTRAR"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Exercícios de descanso (alongamentos leves) */}
+      {dayData.isRest && (
+        <div style={{ marginTop: 0 }}>
+          <h4 style={{ color: C.textMuted, fontWeight: 600, fontSize: 14, marginBottom: 12 }}>Sugestões para hoje:</h4>
+          {[9, 12].map(id => {
+            const ex = EXERCISES[id];
+            return (
+              <div key={id} style={{ background: C.card, borderRadius: 16, padding: "14px 16px", marginBottom: 10, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: C.rest, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🌿</div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{ex.name}</div>
+                  <div style={{ fontSize: 12, color: C.textMuted }}>{ex.muscle} · {ex.duration}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ABA: COMIDAS ─────────────────────────────────────────────────────────────
+function TabComidas({ dayData, selectedDay, completedMeals, onToggleMeal, onExpandMeal, onShowFoodList }) {
+  const meals = [
+    { type: "breakfast", label: "Café da Manhã", icon: "🌅", time: "07:00" },
+    { type: "morningSnack", label: "Lanche da Manhã", icon: "🍎", time: "10:00" },
+    { type: "lunch", label: "Almoço", icon: "🍽️", time: "13:00" },
+    { type: "afternoonSnack", label: "Lanche da Tarde", icon: "🥜", time: "16:00" },
+    { type: "dinner", label: "Jantar", icon: "🌙", time: "19:00" },
+  ];
+  const mealsDone = meals.filter(m => completedMeals[`${selectedDay}-${m.type}`]).length;
+
+  return (
+    <div style={{ padding: "20px 16px 10px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: C.text }}>Comidas</h2>
+          <p style={{ margin: "2px 0 0", color: C.textMuted, fontSize: 14 }}>Dia {selectedDay} · {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</p>
+        </div>
+      </div>
+
+      {/* Resumo de macros do dia */}
+      <div style={{ background: C.card, borderRadius: 16, padding: 16, marginBottom: 18, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Total do dia</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{dayData.totalCals} kcal</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {[["Proteína", dayData.totalProt, "#3498DB"], ["Carbs", dayData.totalCarbs, "#E67E22"], ["Gordura", dayData.totalFat, "#9B59B6"]].map(([label, val, color]) => (
+            <div key={label} style={{ textAlign: "center", padding: "8px 4px", background: C.cardAlt, borderRadius: 10 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color }}>{val}g</div>
+              <div style={{ fontSize: 11, color: C.textMuted }}>{label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, background: C.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${(mealsDone / 5) * 100}%`, background: mealsDone === 5 ? C.green : C.accent, borderRadius: 4 }} />
+          </div>
+          <span style={{ fontSize: 12, color: C.textMuted, flexShrink: 0 }}>{mealsDone}/5 refeições</span>
+        </div>
+      </div>
+
+      {/* Lista de refeições */}
+      {meals.map(({ type, label, icon, time }) => {
+        const meal = dayData.meals[type];
+        const done = completedMeals[`${selectedDay}-${type}`];
+        return (
+          <div key={type} style={{ background: C.card, borderRadius: 16, marginBottom: 12, border: `1px solid ${done ? C.green : C.border}`, overflow: "hidden", boxShadow: `0 2px 10px rgba(0,0,0,0.04)` }}>
+            <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
+              <div style={{ width: 90, flexShrink: 0 }}>
+                <img src={meal.image} alt={meal.name} style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: 90, display: "block" }} onError={e => { e.target.style.background = C.cardAlt; e.target.src = ""; }} />
+              </div>
+              <div style={{ flex: 1, padding: "12px 12px 8px" }}>
+                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 2 }}>{icon} {label} · {time}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 4, lineHeight: 1.3 }}>{meal.name}</div>
+                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 8 }}>{meal.cals} kcal &nbsp;|&nbsp; {meal.prot}g prot. &nbsp;|&nbsp; {meal.carbs}g carbs</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => onExpandMeal(meal, type)} style={{ flex: 1, padding: "6px", background: C.cardAlt, color: C.textMuted, borderRadius: 20, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                    VER DETALHES ›
+                  </button>
+                  <button onClick={() => onToggleMeal(selectedDay, type)} style={{ flex: 1, padding: "6px", background: done ? C.green : C.primary, color: "#FFF", borderRadius: 20, border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                    {done ? "✓ REGISTRADO" : "+ REGISTRAR"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Botão lista de compras */}
+      <button onClick={onShowFoodList} style={{ width: "100%", padding: "15px", background: C.card, color: C.accent, borderRadius: 30, border: `2px solid ${C.accent}`, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 6, letterSpacing: 0.3 }}>
+        🛒 LISTA DE ALIMENTOS BRASILEIROS
+      </button>
+    </div>
+  );
+}
+
+// ─── ABA: PROGRESSO ──────────────────────────────────────────────────────────
+function TabProgresso({ completedEx, completedMeals, totalCompletedDays }) {
+  const mealTypes = ["breakfast", "morningSnack", "lunch", "afternoonSnack", "dinner"];
+  const stats = PLAN_28.map((d) => {
+    const exDone = d.isRest ? d.exercises.length : d.exercises.filter(id => completedEx[`${d.day}-${id}`]).length;
+    const mealsDone = mealTypes.filter(m => completedMeals[`${d.day}-${m}`]).length;
+    const fullyDone = d.isRest ? true : (exDone === d.exercises.length && mealsDone === 5);
+    return { ...d, exDone, mealsDone, fullyDone };
+  });
+
+  const totalExDone = Object.keys(completedEx).filter(k => completedEx[k]).length;
+  const totalMealsDone = Object.keys(completedMeals).filter(k => completedMeals[k]).length;
+  const calsBurned = Object.keys(completedEx).filter(k => completedEx[k]).reduce((sum, key) => {
+    const exId = parseInt(key.split("-")[1]);
+    return sum + (EXERCISES[exId]?.calories || 0);
+  }, 0);
+
+  return (
+    <div style={{ padding: "20px 16px 10px" }}>
+      <h2 style={{ margin: "0 0 18px", fontSize: 26, fontWeight: 800, color: C.text }}>Progresso</h2>
+
+      {/* Cards de estatísticas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
+        {[
+          ["🏆", "Dias Completos", totalCompletedDays, "/ 28"],
+          ["🔥", "Calorias Queimadas", calsBurned, "kcal"],
+          ["💪", "Exercícios Feitos", totalExDone, "registros"],
+          ["🥗", "Refeições Feitas", totalMealsDone, "registros"],
+        ].map(([icon, label, val, unit]) => (
+          <div key={label} style={{ background: C.card, borderRadius: 16, padding: "16px 14px", border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 26, marginBottom: 6 }}>{icon}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.accent }}>{val}</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>{label}</div>
+            <div style={{ fontSize: 11, color: C.border }}>{unit}</div>
+          </div>
         ))}
       </div>
 
-      {/* Exercise Modal */}
-      {selectedExercise && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedExercise(null)}>
-          <div style={styles.modalSheet} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHandle} />
-            <div style={{ textAlign: "center", fontSize: "60px", marginBottom: "16px" }}>
-              {selectedExercise.emoji}
+      {/* Checklist dos 28 dias */}
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Checklist de Dias</h3>
+      {[1, 2, 3, 4].map(week => (
+        <div key={week} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Semana {week}</div>
+          {stats.filter(d => d.week === week).map(d => (
+            <div key={d.day} style={{ background: C.card, borderRadius: 14, padding: "12px 14px", marginBottom: 8, border: `1px solid ${d.fullyDone ? C.green : C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: d.fullyDone ? C.greenLight : d.isRest ? C.rest : C.cardAlt, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: d.fullyDone ? C.green : d.isRest ? C.restText : C.textMuted }}>{d.fullyDone ? "✓" : d.day}</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{d.title}</div>
+                {!d.isRest && (
+                  <div style={{ fontSize: 12, color: C.textMuted }}>{d.exDone}/{d.exercises.length} exerc. · {d.mealsDone}/5 refeições</div>
+                )}
+              </div>
+              {d.fullyDone && <span style={{ color: C.green, fontSize: 18 }}>✅</span>}
+              {d.isRest && !d.fullyDone && <span style={{ fontSize: 14, color: C.restText }}>🌸</span>}
             </div>
-            <div style={styles.modalTitle}>{selectedExercise.name}</div>
-            <div style={styles.modalSubtitle}>{selectedExercise.description}</div>
+          ))}
+        </div>
+      ))}
 
-            <div style={styles.macroRow}>
-              <div style={styles.macroBox(COLORS.primary)}>
-                <div style={styles.macroValue}>{selectedExercise.duration}</div>
-                <div style={styles.macroLabel}>Duração</div>
-              </div>
-              <div style={styles.macroBox(COLORS.secondary)}>
-                <div style={styles.macroValue}>{selectedExercise.reps}</div>
-                <div style={styles.macroLabel}>Séries</div>
-              </div>
-              <div style={styles.macroBox(COLORS.warning)}>
-                <div style={styles.macroValue}>{selectedExercise.calories}</div>
-                <div style={styles.macroLabel}>Kcal</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: COLORS.textMuted, marginBottom: "10px", letterSpacing: "1px", textTransform: "uppercase" }}>
-                Músculos Trabalhados
-              </div>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {selectedExercise.muscles.map((m) => (
-                  <span key={m} style={{ ...styles.exerciseTag(), padding: "6px 14px", fontSize: "13px" }}>
-                    💪 {m}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <button
-              style={styles.btn("primary")}
-              onClick={() => {
-                setSelectedExercise(null);
-                setActiveTab("workout");
-              }}
-            >
-              🔥 Iniciar Exercício
-            </button>
-            <button
-              style={{ ...styles.btn("secondary"), marginTop: "10px" }}
-              onClick={() => setSelectedExercise(null)}
-            >
-              Fechar
-            </button>
-          </div>
+      {totalCompletedDays === 28 && (
+        <div style={{ textAlign: "center", padding: "30px 20px", background: "linear-gradient(135deg, #FFF8E7, #FFF0D4)", borderRadius: 20, marginTop: 10, border: `2px solid ${C.accent}` }}>
+          <div style={{ fontSize: 60, marginBottom: 12 }}>🏆</div>
+          <h3 style={{ margin: "0 0 8px", color: C.accent, fontSize: 22, fontWeight: 800 }}>Parabéns! Você completou os 28 dias!</h3>
+          <p style={{ margin: 0, color: C.textMuted, fontSize: 15 }}>Você é incrível! Continue com seus novos hábitos saudáveis. 🌟</p>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Meal Modal */}
-      {selectedMeal && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedMeal(null)}>
-          <div style={styles.modalSheet} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHandle} />
-            <div style={{ textAlign: "center", fontSize: "60px", marginBottom: "16px" }}>
-              {selectedMeal.icon}
-            </div>
-            <div style={{ fontSize: "12px", color: selectedMeal.color, fontWeight: "700", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px" }}>
-              {selectedMeal.time} · {selectedMeal.time_short}
-            </div>
-            <div style={styles.modalTitle}>{selectedMeal.meal}</div>
-            <div style={styles.modalSubtitle}>
-              Refeição balanceada para seu objetivo de saúde e bem-estar.
-            </div>
+// ─── ABA: PERFIL ──────────────────────────────────────────────────────────────
+function TabPerfil({ currentUser, isAdmin, onLogout, onOpenAdmin }) {
+  return (
+    <div style={{ padding: "20px 16px 10px" }}>
+      <h2 style={{ margin: "0 0 20px", fontSize: 26, fontWeight: 800, color: C.text }}>Perfil</h2>
 
-            <div style={styles.macroRow}>
-              <div style={styles.macroBox(COLORS.warning)}>
-                <div style={styles.macroValue}>{selectedMeal.calories}</div>
-                <div style={styles.macroLabel}>Kcal</div>
-              </div>
-              <div style={styles.macroBox(COLORS.primary)}>
-                <div style={styles.macroValue}>{selectedMeal.protein}</div>
-                <div style={styles.macroLabel}>Proteína</div>
-              </div>
-              <div style={styles.macroBox(COLORS.secondary)}>
-                <div style={styles.macroValue}>{selectedMeal.carbs}</div>
-                <div style={styles.macroLabel}>Carbos</div>
-              </div>
-              <div style={styles.macroBox(COLORS.accent)}>
-                <div style={styles.macroValue}>{selectedMeal.fat}</div>
-                <div style={styles.macroLabel}>Gordura</div>
-              </div>
-            </div>
+      {/* Avatar + usuário */}
+      <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <div style={{ width: 88, height: 88, borderRadius: "50%", background: `linear-gradient(135deg, ${C.accent}, #8B5E2A)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 40 }}>
+          {isAdmin ? "👑" : "🧘‍♀️"}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>{isAdmin ? "Administrador" : "Bem-vinda!"}</div>
+        <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{currentUser}</div>
+        {isAdmin && (
+          <span style={{ display: "inline-block", marginTop: 6, background: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: 11, padding: "3px 10px", borderRadius: 20, border: "1px solid #FFB74D" }}>
+            👑 ADMIN
+          </span>
+        )}
+      </div>
 
-            <button style={styles.btn("primary")} onClick={() => setSelectedMeal(null)}>
-              ✅ Marcar como consumida
-            </button>
-            <button
-              style={{ ...styles.btn("secondary"), marginTop: "10px" }}
-              onClick={() => setSelectedMeal(null)}
-            >
-              Fechar
-            </button>
+      {/* Botão admin — só visível para o admin */}
+      {isAdmin && (
+        <button onClick={onOpenAdmin} style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg, #E65100, #BF360C)", color: "#FFF", borderRadius: 16, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 20px rgba(230,81,0,0.3)" }}>
+          <span style={{ fontSize: 20 }}>🔐</span>
+          GERENCIAR ACESSOS
+        </button>
+      )}
+
+      {/* Plano ativo */}
+      <div style={{ background: C.card, borderRadius: 18, padding: 18, marginBottom: 16, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <span style={{ background: C.greenLight, color: C.green, fontWeight: 700, fontSize: 12, padding: "3px 10px", borderRadius: 20 }}>ATIVO</span>
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 14 }}>Plano de Pilates em Casa — 28 Dias</div>
+        {[
+          ["Período do programa", "28 dias"],
+          ["Nível", "Iniciante ao Avançado"],
+          ["Frequência", "6x por semana"],
+          ["Duração por dia", "20-40 min"],
+        ].map(([label, val]) => (
+          <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 14, color: C.textMuted }}>{label}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{val}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Sobre o programa */}
+      <div style={{ background: C.card, borderRadius: 18, padding: 18, marginBottom: 16, border: `1px solid ${C.border}` }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: C.text }}>Sobre o Programa</h3>
+        <p style={{ margin: "0 0 10px", fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>Este programa foi desenvolvido especialmente para mulheres entre 35 e 65 anos que querem tonificar o corpo, melhorar a postura e ganhar mais energia — tudo isso em casa, sem precisar de equipamentos.</p>
+        <p style={{ margin: 0, fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>Combine os exercícios de pilates com o plano nutricional personalizado e veja sua transformação em 28 dias! 💪</p>
+      </div>
+
+      {/* Dicas */}
+      <div style={{ background: C.accentLight, borderRadius: 18, padding: 18, marginBottom: 16, border: `1px solid ${C.border}` }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: C.accent }}>💡 Dicas Importantes</h3>
+        {[
+          "Hidrate-se bem: beba 2L de água por dia",
+          "Durma pelo menos 7-8 horas por noite",
+          "Respeite os dias de descanso — eles são essenciais!",
+          "Siga o plano alimentar para melhores resultados",
+          "Não desista! Os primeiros 7 dias são os mais difíceis",
+        ].map((tip, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, fontSize: 14, color: "#7A5230", lineHeight: 1.4 }}>
+            <span style={{ flexShrink: 0 }}>✦</span> {tip}
+          </div>
+        ))}
+      </div>
+
+      {/* Sair */}
+      <button onClick={onLogout} style={{ width: "100%", padding: "14px", background: C.card, color: C.red, borderRadius: 30, border: `2px solid ${C.red}`, fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 10 }}>
+        SAIR DA CONTA
+      </button>
+    </div>
+  );
+}
+
+// ─── MODAL: DETALHES DO EXERCÍCIO ────────────────────────────────────────────
+function ExerciseDetailModal({ ex, completed, onToggle, onClose }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.card, borderRadius: "24px 24px 0 0", maxWidth: 430, width: "100%", maxHeight: "88vh", overflow: "auto", paddingBottom: 30 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 10 }}>
+          <div style={{ width: 40, height: 4, background: C.border, borderRadius: 2 }} />
+        </div>
+        <img src={ex.image} alt={ex.name} style={{ width: "100%", height: 220, objectFit: "cover", marginTop: 10 }} />
+        <div style={{ padding: "20px 20px 10px" }}>
+          <div style={{ fontSize: 13, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{ex.muscle}</div>
+          <h2 style={{ margin: "0 0 16px", fontSize: 22, fontWeight: 800, color: C.text }}>{ex.name}</h2>
+          <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+            {[["⏱", ex.duration], ["🔁", ex.sets], ["🔥", `${ex.calories} kcal`], ["📊", ex.level]].map(([icon, val]) => (
+              <span key={val} style={{ background: C.cardAlt, color: C.textMuted, borderRadius: 20, padding: "6px 12px", fontSize: 13, fontWeight: 500 }}>{icon} {val}</span>
+            ))}
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 8 }}>Como fazer:</h3>
+          <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.7, margin: "0 0 14px" }}>{ex.instructions}</p>
+          <div style={{ background: C.accentLight, borderRadius: 12, padding: "12px 14px", marginBottom: 18 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.accent }}>💡 Dica: </span>
+            <span style={{ fontSize: 13, color: "#7A5230" }}>{ex.tips}</span>
+          </div>
+          <button onClick={onToggle} style={{ width: "100%", padding: "15px", background: completed ? C.green : C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>
+            {completed ? "✓ Exercício Concluído!" : "+ REGISTRAR EXERCÍCIO"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MODAL: DETALHES DA REFEIÇÃO ─────────────────────────────────────────────
+function MealDetailModal({ meal, completed, onToggle, onClose }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.card, borderRadius: "24px 24px 0 0", maxWidth: 430, width: "100%", maxHeight: "88vh", overflow: "auto", paddingBottom: 30 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 10 }}>
+          <div style={{ width: 40, height: 4, background: C.border, borderRadius: 2 }} />
+        </div>
+        <img src={meal.image} alt={meal.name} style={{ width: "100%", height: 200, objectFit: "cover", marginTop: 10 }} />
+        <div style={{ padding: "20px 20px 10px" }}>
+          <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 800, color: C.text }}>{meal.name}</h2>
+          {/* Macros */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 18 }}>
+            {[["🔥", meal.cals, "kcal"], ["🥩", meal.prot + "g", "Prot."], ["🌾", meal.carbs + "g", "Carbs"], ["🥑", meal.fat + "g", "Gordura"]].map(([icon, val, label]) => (
+              <div key={label} style={{ textAlign: "center", background: C.cardAlt, borderRadius: 12, padding: "10px 4px" }}>
+                <div style={{ fontSize: 18, marginBottom: 2 }}>{icon}</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>{val}</div>
+                <div style={{ fontSize: 11, color: C.textMuted }}>{label}</div>
+              </div>
+            ))}
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 8 }}>Ingredientes:</h3>
+          <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.7, margin: "0 0 20px", background: C.cardAlt, padding: "12px 14px", borderRadius: 12 }}>{meal.ingredients}</p>
+          <button onClick={onToggle} style={{ width: "100%", padding: "15px", background: completed ? C.green : C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>
+            {completed ? "✓ Refeição Registrada!" : "+ REGISTRAR REFEIÇÃO"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MODAL: LISTA DE ALIMENTOS ───────────────────────────────────────────────
+function FoodListModal({ onClose, activeCategory, setActiveCategory }) {
+  const categories = Object.keys(SHOPPING_LIST);
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.card, borderRadius: "24px 24px 0 0", maxWidth: 430, width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", paddingBottom: 30 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 10, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, background: C.border, borderRadius: 2 }} />
+        </div>
+        <div style={{ padding: "16px 20px 0", flexShrink: 0 }}>
+          <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: C.text }}>🛒 Lista de Alimentos</h2>
+          <p style={{ margin: "0 0 14px", fontSize: 13, color: C.textMuted }}>Fáceis de encontrar em qualquer mercado do Brasil</p>
+          {/* Categorias */}
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+            {categories.map(cat => (
+              <button key={cat} onClick={() => setActiveCategory(cat)} style={{ flexShrink: 0, padding: "7px 14px", borderRadius: 20, border: `1.5px solid ${activeCategory === cat ? C.accent : C.border}`, background: activeCategory === cat ? C.accentLight : C.card, color: activeCategory === cat ? C.accent : C.textMuted, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+        {/* Lista */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 20px" }}>
+          {SHOPPING_LIST[activeCategory].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: i < SHOPPING_LIST[activeCategory].length - 1 ? `1px solid ${C.border}` : "none" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent, flexShrink: 0 }} />
+              <span style={{ fontSize: 15, color: C.text }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BOTTOM NAVIGATION ────────────────────────────────────────────────────────
+function BottomNav({ tab, setTab }) {
+  const items = [
+    { id: "plano", label: "Plano", icon: "📋" },
+    { id: "treinos", label: "Treinos", icon: "🏋️" },
+    { id: "comidas", label: "Comidas", icon: "🥗" },
+    { id: "progresso", label: "Progresso", icon: "📊" },
+    { id: "perfil", label: "Perfil", icon: "👤" },
+  ];
+  return (
+    <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, background: C.tabBg, borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 50, boxShadow: "0 -4px 20px rgba(0,0,0,0.08)" }}>
+      {items.map(({ id, label, icon }) => {
+        const active = tab === id;
+        return (
+          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "10px 4px 12px", background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+            <span style={{ fontSize: 22 }}>{icon}</span>
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 400, color: active ? C.accent : C.textMuted, letterSpacing: 0.2 }}>{label}</span>
+            {active && <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.accent, marginTop: 1 }} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── TELA DE LOGIN ────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setError("Digite um e-mail válido.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setTimeout(() => {
+      const ok = onLogin(trimmed);
+      if (!ok) {
+        setError("❌ Acesso negado. Seu e-mail não está na lista de acesso autorizado.");
+      }
+      setLoading(false);
+    }, 800);
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #FAF0E0 0%, #F5E6D0 50%, #EEDAD8 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "30px 24px", maxWidth: 430, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(135deg, #C17D3C, #8B5E2A)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 10px 36px rgba(193,125,60,0.3)", fontSize: 44 }}>🧘‍♀️</div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1A1A1A", margin: "0 0 4px", letterSpacing: -0.5 }}>CorpoVivo</h1>
+        <p style={{ margin: 0, color: "#8B7355", fontSize: 14 }}>Pilates em Casa · 28 Dias</p>
+      </div>
+
+      <div style={{ background: "#FFFFFF", borderRadius: 24, padding: "28px 24px", width: "100%", boxShadow: "0 4px 30px rgba(0,0,0,0.08)", border: `1px solid ${C.border}` }}>
+        <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: C.text }}>Entrar</h2>
+        <p style={{ margin: "0 0 22px", fontSize: 13, color: C.textMuted }}>Digite seu e-mail para acessar o programa</p>
+
+        <form onSubmit={handleSubmit}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>E-mail</label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError(""); }}
+            placeholder="seu@email.com"
+            style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: `1.5px solid ${error ? C.red : C.border}`, fontSize: 15, color: C.text, background: C.bg, outline: "none", boxSizing: "border-box", marginBottom: 8 }}
+          />
+          {error && (
+            <div style={{ background: C.redLight, color: C.red, borderRadius: 12, padding: "10px 14px", fontSize: 13, marginBottom: 14, lineHeight: 1.4 }}>
+              {error}
+            </div>
+          )}
+          <button type="submit" disabled={loading} style={{ width: "100%", padding: "15px", background: loading ? C.border : C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", marginTop: error ? 0 : 8, letterSpacing: 0.5 }}>
+            {loading ? "Verificando..." : "ENTRAR →"}
+          </button>
+        </form>
+      </div>
+
+      <p style={{ marginTop: 22, fontSize: 12, color: "#B0A090", textAlign: "center", lineHeight: 1.6 }}>
+        Acesso restrito a membros autorizados.<br />Entre em contato com a administradora para solicitar acesso.
+      </p>
+    </div>
+  );
+}
+
+// ─── MODAL: PAINEL DE ADMINISTRAÇÃO ──────────────────────────────────────────
+function AdminPanelModal({ accessList, onAdd, onRemove, onClose }) {
+  const [newEmail, setNewEmail] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState("ok");
+
+  function handleAdd() {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      setFeedback("Digite um e-mail válido."); setFeedbackType("err"); return;
+    }
+    if (accessList.includes(trimmed)) {
+      setFeedback("Este e-mail já tem acesso."); setFeedbackType("err"); return;
+    }
+    onAdd(trimmed);
+    setNewEmail("");
+    setFeedback(`✓ Acesso concedido para ${trimmed}`);
+    setFeedbackType("ok");
+    setTimeout(() => setFeedback(""), 3000);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: C.card, borderRadius: "24px 24px 0 0", maxWidth: 430, width: "100%", maxHeight: "90vh", display: "flex", flexDirection: "column", paddingBottom: 30 }} onClick={e => e.stopPropagation()}>
+
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, background: C.border, borderRadius: 2 }} />
+        </div>
+
+        <div style={{ padding: "16px 20px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <span style={{ fontSize: 26 }}>🔐</span>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Controle de Acesso</h2>
+          </div>
+          <p style={{ margin: "0 0 18px", fontSize: 13, color: C.textMuted }}>Gerencie quem pode acessar o aplicativo</p>
+
+          <div style={{ background: C.cardAlt, borderRadius: 16, padding: "14px 16px", marginBottom: 4 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Conceder acesso a novo e-mail</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => { setNewEmail(e.target.value); setFeedback(""); }}
+                onKeyDown={e => e.key === "Enter" && handleAdd()}
+                placeholder="email@exemplo.com"
+                style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${C.border}`, fontSize: 14, color: C.text, background: "#FFF", outline: "none", boxSizing: "border-box" }}
+              />
+              <button onClick={handleAdd} style={{ padding: "11px 18px", background: C.primary, color: "#FFF", borderRadius: 12, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", flexShrink: 0 }}>
+                + ADD
+              </button>
+            </div>
+            {feedback && (
+              <div style={{ marginTop: 8, fontSize: 13, color: feedbackType === "ok" ? C.green : C.red, fontWeight: 600 }}>
+                {feedback}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
+            {accessList.length} e-mail{accessList.length !== 1 ? "s" : ""} com acesso
+          </div>
+          {accessList.map((em) => {
+            const isAdminRow = em === ADMIN_EMAIL;
+            return (
+              <div key={em} style={{ background: C.card, borderRadius: 14, padding: "12px 14px", marginBottom: 8, border: `1px solid ${isAdminRow ? "#FFB74D" : C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: isAdminRow ? "#FFF3E0" : C.cardAlt, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18 }}>
+                  {isAdminRow ? "👑" : "👤"}
+                </div>
+                <div style={{ flex: 1, overflow: "hidden" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{em}</div>
+                  {isAdminRow && <div style={{ fontSize: 11, color: "#E65100", fontWeight: 700 }}>ADMINISTRADOR</div>}
+                </div>
+                {!isAdminRow && (
+                  <button onClick={() => onRemove(em)} style={{ width: 32, height: 32, borderRadius: "50%", background: C.redLight, color: C.red, border: "none", fontWeight: 700, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ padding: "0 20px", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ width: "100%", padding: "14px", background: C.primary, color: "#FFF", borderRadius: 30, border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+            FECHAR
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
