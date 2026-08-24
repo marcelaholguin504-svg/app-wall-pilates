@@ -1,77 +1,66 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    background-color: #0b0a1f;
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply font-sans text-white antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: theme("fontFamily.display");
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 }
 
-html, body {
-  height: 100%;
-  background-color: #0F0A1E;
-  overscroll-behavior: none;
-}
+@layer utilities {
+  .app-shell {
+    @apply mx-auto w-full max-w-[440px] min-h-screen relative;
+    background: radial-gradient(120% 60% at 50% 0%, #1a1836 0%, #0b0a1f 55%, #08071a 100%);
+  }
 
-body {
-  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #FFFFFF;
-}
-
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-button {
-  appearance: none;
-  -webkit-appearance: none;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-}
-
-button:active {
-  transform: scale(0.97);
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
-
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-/* Smooth transitions */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.fade-in {
-  animation: fadeIn 0.4s ease forwards;
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-.slide-up {
-  animation: slideUp 0.3s ease forwards;
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
