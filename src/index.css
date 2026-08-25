@@ -3,15 +3,51 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Azul medianoche profundo */
+    --background: 248 42% 7%;
+    --foreground: 40 38% 95%;
+
+    --card: 248 36% 10%;
+    --card-foreground: 40 38% 95%;
+
+    /* Lavanda apagado */
+    --primary: 256 32% 62%;
+    --primary-foreground: 40 38% 97%;
+
+    /* Crema cálido */
+    --secondary: 36 42% 90%;
+    --secondary-foreground: 248 30% 14%;
+
+    --muted: 248 26% 15%;
+    --muted-foreground: 250 16% 68%;
+
+    /* Dorado tenue / luz de luna */
+    --accent: 42 62% 66%;
+    --accent-foreground: 248 30% 12%;
+
+    --success: 152 40% 55%;
+    --success-foreground: 248 30% 10%;
+
+    --destructive: 6 68% 63%;
+    --destructive-foreground: 40 38% 97%;
+
+    --border: 250 24% 20%;
+    --input: 250 24% 20%;
+    --ring: 256 32% 62%;
+
+    --radius: 1.1rem;
+  }
+
   html,
   body {
     height: 100%;
-    background-color: #0b0a1f;
+    background-color: hsl(var(--background));
     overscroll-behavior: none;
   }
 
   body {
-    @apply font-sans text-white antialiased;
+    @apply font-sans text-foreground antialiased;
   }
 
   h1,
@@ -34,14 +70,11 @@
     outline: none;
   }
 
-  button:active {
-    transform: scale(0.97);
-  }
-
   input,
   textarea,
   select {
     font-family: inherit;
+    font-size: 16px;
   }
 
   ::-webkit-scrollbar {
@@ -57,10 +90,15 @@
 @layer utilities {
   .app-shell {
     @apply mx-auto w-full max-w-[440px] min-h-screen relative;
-    background: radial-gradient(120% 60% at 50% 0%, #1a1836 0%, #0b0a1f 55%, #08071a 100%);
+    background: radial-gradient(120% 55% at 50% 0%, hsl(var(--card)) 0%, hsl(var(--background)) 55%, hsl(248 46% 5%) 100%);
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "Dulce Sueño - Guía de sueño para bebés",
-  "short_name": "Dulce Sueño",
-  "description": "Dime qué hacer ahora para que tu bebé duerma. Guía cálida y clara, disponible a cualquier hora.",
+  "name": "Duerme Ya - Orientación de sueño infantil",
+  "short_name": "Duerme Ya",
+  "description": "Dime qué está pasando y te ayudamos a saber por dónde empezar.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0B0A1F",
