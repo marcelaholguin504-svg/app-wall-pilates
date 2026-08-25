@@ -1,77 +1,104 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Azul medianoche profundo */
+    --background: 248 42% 7%;
+    --foreground: 40 38% 95%;
+
+    --card: 248 36% 10%;
+    --card-foreground: 40 38% 95%;
+
+    /* Lavanda apagado */
+    --primary: 256 32% 62%;
+    --primary-foreground: 40 38% 97%;
+
+    /* Crema cálido */
+    --secondary: 36 42% 90%;
+    --secondary-foreground: 248 30% 14%;
+
+    --muted: 248 26% 15%;
+    --muted-foreground: 250 16% 68%;
+
+    /* Dorado tenue / luz de luna */
+    --accent: 42 62% 66%;
+    --accent-foreground: 248 30% 12%;
+
+    --success: 152 40% 55%;
+    --success-foreground: 248 30% 10%;
+
+    --destructive: 6 68% 63%;
+    --destructive-foreground: 40 38% 97%;
+
+    --border: 250 24% 20%;
+    --input: 250 24% 20%;
+    --ring: 256 32% 62%;
+
+    --radius: 1.1rem;
+  }
+
+  html,
+  body {
+    height: 100%;
+    background-color: hsl(var(--background));
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply font-sans text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: theme("fontFamily.display");
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: 16px;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 }
 
-html, body {
-  height: 100%;
-  background-color: #0F0A1E;
-  overscroll-behavior: none;
-}
+@layer utilities {
+  .app-shell {
+    @apply mx-auto w-full max-w-[440px] min-h-screen relative;
+    background: radial-gradient(120% 55% at 50% 0%, hsl(var(--card)) 0%, hsl(var(--background)) 55%, hsl(248 46% 5%) 100%);
+  }
 
-body {
-  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #FFFFFF;
-}
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-button {
-  appearance: none;
-  -webkit-appearance: none;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-}
-
-button:active {
-  transform: scale(0.97);
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
-
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-/* Smooth transitions */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.fade-in {
-  animation: fadeIn 0.4s ease forwards;
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-.slide-up {
-  animation: slideUp 0.3s ease forwards;
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
