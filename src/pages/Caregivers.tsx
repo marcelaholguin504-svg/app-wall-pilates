@@ -1,39 +1,98 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppState, useAppDispatch } from "@/hooks/useApp";
+import { useAppState } from "@/hooks/useApp";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CAREGIVER_TYPES, caregiverTypeEmoji, caregiverTypeLabel } from "@/data/caregiverTypes";
-import type { CaregiverType } from "@/types";
+import { MAX_INVITED_CAREGIVERS, type AccountMember } from "@/types";
+import { fetchAccountMembers, inviteCaregiver, revokeCaregiver } from "@/services/accountService";
+
+function statusLabel(status: AccountMember["status"]) {
+  if (status === "activo") return "Activo";
+  if (status === "invitación pendiente") return "Invitación pendiente";
+  return "Revocado";
+}
 
 export default function Caregivers() {
   const state = useAppState();
-  const dispatch = useAppDispatch();
+  const { membership } = useAuth();
   const navigate = useNavigate();
 
+  const [members, setMembers] = useState<AccountMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [adding, setAdding] = useState(false);
-  const [name, setName] = useState("");
-  const [type, setType] = useState<CaregiverType | "">("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [inviteSentTo, setInviteSentTo] = useState<string | null>(null);
+
+  const [revoking, setRevoking] = useState<AccountMember | null>(null);
+  const [revokeError, setRevokeError] = useState("");
 
   const child = state.child;
-  if (!child) return null;
+  const isAdmin = membership?.role === "admin";
 
-  function handleAdd() {
-    if (!name.trim() || !type) {
-      setError("Escribe un nombre y elige quién es.");
+  async function loadMembers() {
+    setLoading(true);
+    const list = await fetchAccountMembers();
+    setMembers(list);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  const invitedCaregiversCount = members.filter(
+    (m) => m.role === "cuidador" && (m.status === "activo" || m.status === "invitación pendiente")
+  ).length;
+  const atLimit = invitedCaregiversCount >= MAX_INVITED_CAREGIVERS;
+
+  async function handleInvite() {
+    setInviteError("");
+    if (!email.trim()) {
+      setInviteError("Escribe un correo.");
       return;
     }
-    dispatch({ type: "ADD_CAREGIVER", caregiver: { name: name.trim(), type } });
-    setName("");
-    setType("");
-    setError("");
-    setAdding(false);
+    setInviting(true);
+    try {
+      await inviteCaregiver(email);
+      setInviteSentTo(email.trim());
+      setEmail("");
+      await loadMembers();
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "No se pudo enviar la invitación.");
+    } finally {
+      setInviting(false);
+    }
   }
+
+  function closeInviteSheet() {
+    setAdding(false);
+    setInviteSentTo(null);
+    setInviteError("");
+    setEmail("");
+  }
+
+  async function handleRevoke() {
+    if (!revoking) return;
+    setRevokeError("");
+    try {
+      await revokeCaregiver(revoking.id);
+      setRevoking(null);
+      await loadMembers();
+    } catch (err) {
+      setRevokeError(err instanceof Error ? err.message : "No se pudo quitar el acceso.");
+    }
+  }
+
+  if (!child) return null;
 
   return (
     <div className="min-h-screen px-5 pt-6 pb-10">
@@ -41,77 +100,103 @@ export default function Caregivers() {
         ← Atrás
       </button>
 
-      <h1 className="font-display text-2xl font-extrabold mb-1">Cuidadores de {child.name}</h1>
+      <h1 className="font-display text-2xl font-extrabold mb-1">Cuidadores con acceso a {child.name}</h1>
       <p className="text-muted-foreground text-sm mb-6">
-        Esto es para todos los que cuidan a {child.name}: mamá, papá, abuelas, abuelos, niñeras o cualquier persona que lo
-        acompañe a dormir.
+        {isAdmin
+          ? "Como administradora, puedes invitar hasta 4 cuidadores adicionales y quitarles el acceso cuando quieras."
+          : "Estas son las personas que hoy tienen acceso a la app de " + child.name + "."}
       </p>
 
-      <Card className="mb-6 bg-primary/10 border-primary/30">
-        <p className="text-sm font-bold mb-1.5">Compartir con cuidadores — próximamente</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Pronto todos los que cuidan a {child.name} podrán ver la misma última siesta, el mismo último despertar, la
-          misma rutina y el mismo plan desde su propio teléfono. Por ahora, esta lista se guarda solo en este dispositivo.
-        </p>
-      </Card>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Cargando…</p>
+      ) : (
+        <div className="flex flex-col gap-2.5 mb-6">
+          {members.map((m) => (
+            <Card key={m.id} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg shrink-0">
+                {m.role === "admin" ? "👑" : "❤️"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{m.email}</p>
+                <p className="text-xs text-muted-foreground">{m.role === "admin" ? "Administradora" : "Cuidador"}</p>
+              </div>
+              <Badge variant={m.status === "activo" ? "success" : "outline"}>{statusLabel(m.status)}</Badge>
+              {isAdmin && m.role !== "admin" && (
+                <button
+                  onClick={() => setRevoking(m)}
+                  className="text-destructive text-xs font-bold px-1 touch-target shrink-0"
+                >
+                  Quitar acceso
+                </button>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
 
-      <div className="flex items-center justify-between mb-3 px-1">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Personas agregadas</p>
-        <button onClick={() => setAdding(true)} className="text-sm font-bold text-primary touch-target">
-          + Agregar cuidador
-        </button>
-      </div>
+      {isAdmin && (
+        <>
+          {atLimit ? (
+            <Card className="text-center">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Ya invitaste al máximo de cuidadores (4). Si necesitas más, contáctanos.
+              </p>
+            </Card>
+          ) : (
+            <Button onClick={() => setAdding(true)}>+ Invitar cuidador</Button>
+          )}
+        </>
+      )}
 
-      <div className="flex flex-col gap-2.5">
-        {state.caregivers.length === 0 && (
-          <Card>
-            <p className="text-sm text-muted-foreground">Aún no has agregado a nadie más.</p>
-          </Card>
-        )}
-        {state.caregivers.map((c) => (
-          <Card key={c.id} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg shrink-0">
-              {caregiverTypeEmoji(c.type)}
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-sm">{c.name}</p>
-              <Badge variant="outline">{caregiverTypeLabel(c.type)}</Badge>
-            </div>
-            <button
-              onClick={() => dispatch({ type: "REMOVE_CAREGIVER", id: c.id })}
-              className="text-muted-foreground/50 text-lg px-2 touch-target"
-              aria-label="Quitar cuidador"
-            >
-              ×
-            </button>
-          </Card>
-        ))}
-      </div>
-
-      <Sheet open={adding} onOpenChange={setAdding}>
+      <Sheet open={adding} onOpenChange={closeInviteSheet}>
         <SheetContent>
-          <SheetTitle>Agregar cuidador</SheetTitle>
-          <Label htmlFor="cg-name">Nombre</Label>
-          <Input id="cg-name" placeholder="Ej. Abuela Rosa" value={name} onChange={(e) => setName(e.target.value)} className="mb-4" />
-          <Label>¿Quién es?</Label>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {CAREGIVER_TYPES.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setType(c.id)}
-                className={`rounded-xl p-3 flex flex-col items-center gap-1 border-2 touch-target ${
-                  type === c.id ? "bg-primary/20 border-primary" : "bg-muted border-border"
-                }`}
-              >
-                <span className="text-xl">{c.emoji}</span>
-                <span className="text-[11px] font-semibold text-center leading-tight">{c.label}</span>
-              </button>
-            ))}
-          </div>
-          {error && <p className="text-destructive text-sm mb-3">{error}</p>}
-          <Button onClick={handleAdd}>Agregar</Button>
+          {inviteSentTo ? (
+            <div className="text-center py-4">
+              <div className="text-4xl mb-3">💜</div>
+              <h3 className="font-display text-lg font-extrabold mb-2">Invitación enviada</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Le mandamos un enlace de acceso a <span className="font-semibold text-foreground">{inviteSentTo}</span>.
+              </p>
+              <Button onClick={closeInviteSheet}>Listo</Button>
+            </div>
+          ) : (
+            <>
+              <SheetTitle>¿Cuál es el correo de la persona que quieres invitar?</SheetTitle>
+              <Label htmlFor="invite-email">Correo electrónico</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="cuidador@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mb-4"
+              />
+              {inviteError && <p className="text-destructive text-sm mb-4">{inviteError}</p>}
+              <Button onClick={handleInvite} disabled={inviting}>
+                {inviting ? "Enviando…" : "Enviar invitación"}
+              </Button>
+            </>
+          )}
         </SheetContent>
       </Sheet>
+
+      <Dialog open={Boolean(revoking)} onOpenChange={(open) => !open && setRevoking(null)}>
+        <DialogContent>
+          <DialogTitle>¿Quitar el acceso de {revoking?.email}?</DialogTitle>
+          <DialogDescription>
+            Ya no podrá entrar a Duerme Ya. Sus registros anteriores se conservan, no se borran.
+          </DialogDescription>
+          {revokeError && <p className="text-destructive text-sm mb-3">{revokeError}</p>}
+          <div className="flex flex-col gap-2">
+            <Button variant="destructive" onClick={handleRevoke}>
+              Quitar acceso
+            </Button>
+            <Button variant="ghost" onClick={() => setRevoking(null)}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
