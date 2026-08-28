@@ -31,6 +31,7 @@ export type ImprovementGoal =
 
 export interface ChildProfile {
   id: string;
+  accountId: string;
   name: string;
   ageStage: AgeStage;
   birthDate?: string;
@@ -42,16 +43,36 @@ export interface ChildProfile {
   createdAt: string;
 }
 
-export interface Caregiver {
+// --- Cuentas y control de acceso (Supabase) ---
+// Una "cuenta" es la familia/compra en Hotmart. Cada persona con acceso
+// (administradora o cuidador invitado) es un account_member.
+
+export type AccountRole = "admin" | "cuidador";
+export type MemberStatus = "activo" | "invitación pendiente" | "revocado";
+
+export interface Account {
   id: string;
-  name: string;
-  type: CaregiverType;
+  createdAt: string;
+  hotmartPurchaseId: string | null;
 }
+
+export interface AccountMember {
+  id: string;
+  accountId: string;
+  email: string;
+  role: AccountRole;
+  invitedBy: string | null;
+  status: MemberStatus;
+  createdAt: string;
+}
+
+export const MAX_INVITED_CAREGIVERS = 4;
 
 export type SleepEventType = "wake" | "nap_start" | "nap_end" | "night_sleep" | "night_wake";
 
 export interface SleepEvent {
   id: string;
+  accountId: string;
   type: SleepEventType;
   timestamp: string;
 }
@@ -126,4 +147,11 @@ export type EventName =
   | "registro_creado"
   | "cuidador_agregado"
   | "plan_editado"
-  | "ventana_sueno_ajustada";
+  | "ventana_sueno_ajustada"
+  | "login_solicitado"
+  | "login_denegado"
+  | "sesion_iniciada"
+  | "sesion_cerrada"
+  | "invitacion_enviada"
+  | "invitacion_bloqueada_por_limite"
+  | "cuidador_acceso_revocado";

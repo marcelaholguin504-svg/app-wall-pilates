@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppState } from "@/hooks/useApp";
+import { useAuth } from "@/hooks/useAuth";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import ChildAvatar from "@/components/ChildAvatar";
@@ -22,13 +23,14 @@ import type { AgeStage, CaregiverType, ImprovementGoal, ScheduleConsistency, Sle
 export default function Profile() {
   const state = useAppState();
   const dispatch = useAppDispatch();
+  const { session, membership, signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState("");
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const child = state.child;
@@ -86,9 +88,9 @@ export default function Profile() {
     setPhotoSheetOpen(false);
   }
 
-  function resetAll() {
-    dispatch({ type: "RESET_ALL" });
-    navigate("/", { replace: true });
+  async function handleSignOut() {
+    await signOut();
+    navigate("/entrar", { replace: true });
   }
 
   return (
@@ -226,8 +228,19 @@ export default function Profile() {
           <p className="text-xs text-muted-foreground leading-relaxed">{MEDICAL_DISCLAIMER}</p>
         </Card>
 
-        <button onClick={() => setConfirmReset(true)} className="text-sm font-semibold text-destructive text-center pb-4">
-          Borrar todos mis datos
+        <Card className="text-center">
+          <p className="text-xs text-muted-foreground mb-1">Sesión iniciada como</p>
+          <p className="text-sm font-semibold mb-1">{session?.user?.email}</p>
+          <p className="text-xs text-muted-foreground">
+            {membership?.role === "admin" ? "Administradora" : "Cuidador"}
+          </p>
+        </Card>
+
+        <button
+          onClick={() => setConfirmSignOut(true)}
+          className="text-sm font-semibold text-destructive text-center pb-4"
+        >
+          Cerrar sesión
         </button>
       </div>
 
@@ -273,17 +286,18 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmReset} onOpenChange={setConfirmReset}>
+      <Dialog open={confirmSignOut} onOpenChange={setConfirmSignOut}>
         <DialogContent>
-          <DialogTitle>¿Borrar todos tus datos?</DialogTitle>
+          <DialogTitle>¿Cerrar sesión?</DialogTitle>
           <DialogDescription>
-            Esto elimina el perfil, los registros y el plan guardados en este dispositivo. No se puede deshacer.
+            El perfil de {child.name} y sus registros quedan guardados. Puedes volver a entrar con tu correo cuando
+            quieras.
           </DialogDescription>
           <div className="flex flex-col gap-2">
-            <Button variant="destructive" onClick={resetAll}>
-              Sí, borrar todo
+            <Button variant="destructive" onClick={handleSignOut}>
+              Cerrar sesión
             </Button>
-            <Button variant="ghost" onClick={() => setConfirmReset(false)}>
+            <Button variant="ghost" onClick={() => setConfirmSignOut(false)}>
               Cancelar
             </Button>
           </div>
