@@ -118,8 +118,13 @@ export default function Privacy() {
               información.
             </li>
             <li>
-              <strong className="text-foreground">Borrar todos tus datos</strong> de forma permanente, usando el
-              botón "Borrar todos mis datos" dentro de tu Perfil. Esta acción no se puede deshacer.
+              <strong className="text-foreground">Borrar todos tus datos</strong> de forma permanente,
+              escribiéndonos a{" "}
+              <a href="mailto:ndhub186@gmail.com" className="text-primary underline">
+                ndhub186@gmail.com
+              </a>
+              . Por ahora es un proceso manual: te confirmamos por correo cuando quede hecho. Esta acción no se puede
+              deshacer.
             </li>
             <li>
               <strong className="text-foreground">Pedirnos información</strong> sobre qué datos tuyos tenemos
