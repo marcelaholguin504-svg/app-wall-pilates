@@ -118,13 +118,21 @@ export default function Privacy() {
               información.
             </li>
             <li>
-              <strong className="text-foreground">Borrar todos tus datos</strong> de forma permanente,
-              escribiéndonos a{" "}
-              <a href="mailto:ndhub186@gmail.com" className="text-primary underline">
-                ndhub186@gmail.com
-              </a>
-              . Por ahora es un proceso manual: te confirmamos por correo cuando quede hecho. Esta acción no se puede
-              deshacer.
+              <strong className="text-foreground">Salir de la cuenta o borrar todo</strong>, según tu rol, desde tu
+              Perfil:
+              <ul className="list-disc pl-5 mt-1.5 flex flex-col gap-1.5">
+                <li>
+                  Si eres <strong className="text-foreground">cuidador/a invitado/a</strong>, puedes salir de la
+                  cuenta tú mismo/a en cualquier momento con el botón "Salir de esta cuenta". Dejas de tener acceso,
+                  pero el perfil del niño y los datos de los demás cuidadores no se ven afectados.
+                </li>
+                <li>
+                  Si eres la <strong className="text-foreground">Administradora</strong>, puedes borrar
+                  permanentemente el perfil del niño, todos los registros y el acceso de todos los cuidadores
+                  invitados con el botón "Borrar todos mis datos". Por lo grave que es, te pedimos escribir una
+                  palabra de confirmación antes de ejecutarlo. Esta acción no se puede deshacer.
+                </li>
+              </ul>
             </li>
             <li>
               <strong className="text-foreground">Pedirnos información</strong> sobre qué datos tuyos tenemos
