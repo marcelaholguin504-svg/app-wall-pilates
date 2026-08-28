@@ -236,6 +236,10 @@ export default function Profile() {
           </p>
         </Card>
 
+        <button onClick={() => navigate("/privacidad")} className="text-sm font-bold text-primary text-center">
+          Privacidad y seguridad
+        </button>
+
         <button
           onClick={() => setConfirmSignOut(true)}
           className="text-sm font-semibold text-destructive text-center pb-4"

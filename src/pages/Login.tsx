@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,13 @@ export default function Login() {
           <Button type="submit" size="lg" disabled={status === "loading"}>
             {status === "loading" ? "Enviando…" : "Enviarme el enlace de acceso"}
           </Button>
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Al continuar, aceptas nuestra{" "}
+            <Link to="/privacidad" className="text-primary underline font-semibold">
+              Privacidad y seguridad
+            </Link>
+          </p>
         </form>
       )}
     </div>
