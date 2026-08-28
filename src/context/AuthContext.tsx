@@ -36,16 +36,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      const email = data.session?.user?.email;
-      if (email) {
-        resolveMembership(email).finally(() => mounted && setLoading(false));
-      } else {
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        const email = data.session?.user?.email;
+        if (email) {
+          resolveMembership(email).finally(() => mounted && setLoading(false));
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        // Sin sesión legible (sin red, cliente mal configurado, etc.): no
+        // dejamos la pantalla cargando para siempre — se trata como "sin
+        // sesión" y se manda amablemente al inicio de sesión.
+        if (!mounted) return;
+        setSession(null);
         setLoading(false);
-      }
-    });
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
