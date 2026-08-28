@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 import Login from "@/pages/Login";
+import Privacy from "@/pages/Privacy";
 import Onboarding from "@/pages/Onboarding";
 import Home from "@/pages/Home";
 import AyudameAhora from "@/pages/AyudameAhora";
@@ -83,6 +84,9 @@ export default function App() {
             </RedirectIfAuthed>
           }
         />
+
+        {/* Pública a propósito: se enlaza desde /entrar, antes de iniciar sesión. */}
+        <Route path="/privacidad" element={<Privacy />} />
 
         <Route
           path="/onboarding"
