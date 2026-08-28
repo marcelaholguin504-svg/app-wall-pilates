@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppState } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +18,10 @@ import { SLEEP_PROBLEM_OPTIONS, SCHEDULE_CONSISTENCY_OPTIONS, IMPROVEMENT_GOAL_O
 import { isAcceptedImage, resizeImageToDataUrl } from "@/services/photoService";
 import { isToddlerStage } from "@/data/ageStages";
 import { MEDICAL_DISCLAIMER } from "@/data/safetyContent";
+import { deleteAccountData, fetchAccountMembers, leaveAccount } from "@/services/accountService";
 import type { AgeStage, CaregiverType, ImprovementGoal, ScheduleConsistency, SleepProblem } from "@/types";
+
+const DELETE_CONFIRM_WORD = "BORRAR";
 
 export default function Profile() {
   const state = useAppState();
@@ -33,7 +36,27 @@ export default function Profile() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const isAdmin = membership?.role === "admin";
+  const [invitedCount, setInvitedCount] = useState(0);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState("");
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   const child = state.child;
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchAccountMembers().then((members) => {
+      const count = members.filter(
+        (m) => m.role === "cuidador" && (m.status === "activo" || m.status === "invitación pendiente")
+      ).length;
+      setInvitedCount(count);
+    });
+  }, [isAdmin]);
 
   const [form, setForm] = useState(() => ({
     name: child?.name || "",
@@ -91,6 +114,32 @@ export default function Profile() {
   async function handleSignOut() {
     await signOut();
     navigate("/entrar", { replace: true });
+  }
+
+  async function handleLeaveAccount() {
+    setLeaving(true);
+    setLeaveError("");
+    try {
+      await leaveAccount();
+      await signOut();
+      navigate("/entrar", { replace: true });
+    } catch (err) {
+      setLeaveError(err instanceof Error ? err.message : "No se pudo salir de la cuenta.");
+      setLeaving(false);
+    }
+  }
+
+  async function handleDeleteAllData() {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteAccountData();
+      await signOut();
+      navigate("/entrar", { replace: true });
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "No se pudieron borrar los datos.");
+      setDeleting(false);
+    }
   }
 
   return (
@@ -242,10 +291,26 @@ export default function Profile() {
 
         <button
           onClick={() => setConfirmSignOut(true)}
-          className="text-sm font-semibold text-destructive text-center pb-4"
+          className="text-sm font-semibold text-destructive text-center"
         >
           Cerrar sesión
         </button>
+
+        {isAdmin ? (
+          <button
+            onClick={() => setConfirmDeleteAll(true)}
+            className="text-sm font-semibold text-destructive text-center pb-4"
+          >
+            Borrar todos mis datos
+          </button>
+        ) : (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            className="text-sm font-semibold text-destructive text-center pb-4"
+          >
+            Salir de esta cuenta
+          </button>
+        )}
       </div>
 
       <Sheet open={photoSheetOpen} onOpenChange={setPhotoSheetOpen}>
@@ -302,6 +367,77 @@ export default function Profile() {
               Cerrar sesión
             </Button>
             <Button variant="ghost" onClick={() => setConfirmSignOut(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmLeave}
+        onOpenChange={(open) => {
+          setConfirmLeave(open);
+          if (!open) setLeaveError("");
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>¿Salir de esta cuenta?</DialogTitle>
+          <DialogDescription>
+            ¿Seguro que quieres dejar de tener acceso a {child.name}? Podrás volver a entrar solo si te invitan de
+            nuevo.
+          </DialogDescription>
+          {leaveError && <p className="text-destructive text-sm mb-3">{leaveError}</p>}
+          <div className="flex flex-col gap-2">
+            <Button variant="destructive" onClick={handleLeaveAccount} disabled={leaving}>
+              {leaving ? "Saliendo…" : "Salir de esta cuenta"}
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmLeave(false)} disabled={leaving}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmDeleteAll}
+        onOpenChange={(open) => {
+          setConfirmDeleteAll(open);
+          if (!open) {
+            setDeleteConfirmText("");
+            setDeleteError("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>¿Borrar todos tus datos?</DialogTitle>
+          <DialogDescription>
+            Esto eliminará el perfil de {child.name}
+            {invitedCount > 0
+              ? ` y quitará el acceso a ${invitedCount === 1 ? "el cuidador" : `los ${invitedCount} cuidadores`} que invitaste`
+              : ""}
+            . Esta acción no se puede deshacer.
+          </DialogDescription>
+          <Label htmlFor="delete-confirm">
+            Para confirmar, escribe <span className="font-bold text-foreground">{DELETE_CONFIRM_WORD}</span>
+          </Label>
+          <Input
+            id="delete-confirm"
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder={DELETE_CONFIRM_WORD}
+            className="mb-4"
+            autoComplete="off"
+          />
+          {deleteError && <p className="text-destructive text-sm mb-3">{deleteError}</p>}
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllData}
+              disabled={deleteConfirmText !== DELETE_CONFIRM_WORD || deleting}
+            >
+              {deleting ? "Borrando…" : "Borrar todos mis datos"}
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmDeleteAll(false)} disabled={deleting}>
               Cancelar
             </Button>
           </div>

@@ -90,3 +90,17 @@ export async function revokeCaregiver(memberId: string): Promise<void> {
   const { error } = await supabase.rpc("revoke_caregiver", { p_member_id: memberId });
   if (error) throw new Error(error.message);
 }
+
+// Un cuidador invitado (no la administradora) deja la cuenta por su cuenta.
+// Ver supabase/migrations/0002_account_deletion.sql.
+export async function leaveAccount(): Promise<void> {
+  const { error } = await supabase.rpc("leave_account");
+  if (error) throw new Error(error.message);
+}
+
+// Solo la administradora: borra el perfil del niño, todos los registros y
+// el acceso de todos los cuidadores invitados, de forma permanente.
+export async function deleteAccountData(): Promise<void> {
+  const { error } = await supabase.rpc("delete_account_data");
+  if (error) throw new Error(error.message);
+}
