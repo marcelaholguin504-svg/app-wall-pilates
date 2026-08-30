@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppState } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
@@ -24,6 +25,7 @@ const ICONS: Record<string, typeof CloudRain> = {
 
 export default function Sounds() {
   const state = useAppState();
+  const navigate = useNavigate();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [timer, setTimer] = useState<TimerOption>(30);
   const [openArticle, setOpenArticle] = useState<string | null>(null);
@@ -55,6 +57,14 @@ export default function Sounds() {
       <div className="px-5 pt-8">
         <h1 className="font-display text-2xl font-extrabold mb-1">Sonidos</h1>
         <p className="text-muted-foreground text-sm mb-6">Toca un sonido para reproducirlo. Vuelve a tocarlo para detenerlo.</p>
+
+        <button
+          onClick={() => navigate("/biblioteca")}
+          className="w-full rounded-2xl p-4 mb-6 flex items-center justify-between border-2 border-border bg-card touch-target"
+        >
+          <span className="text-sm font-bold">📚 Biblioteca</span>
+          <span className="text-muted-foreground">→</span>
+        </button>
 
         <div className="grid grid-cols-2 gap-2.5 mb-6">
           {SOUNDS.map((sound) => {

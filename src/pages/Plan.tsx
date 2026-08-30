@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppState, useAppDispatch } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
@@ -19,6 +20,7 @@ const SECTIONS: { id: Section; label: string; emoji: string }[] = [
 export default function Plan() {
   const state = useAppState();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [draft, setDraft] = useState<PlanAction[]>([]);
 
@@ -74,6 +76,13 @@ export default function Plan() {
             Este plan es una guía. Puedes ajustarlo según las señales de {child.name}.
           </p>
         </Card>
+
+        <button
+          onClick={() => navigate("/consejos")}
+          className="text-sm font-bold text-primary text-center mt-4"
+        >
+          💡 Consejos para dormir mejor
+        </button>
       </div>
 
       <Sheet open={Boolean(editingSection)} onOpenChange={(open) => !open && setEditingSection(null)}>
