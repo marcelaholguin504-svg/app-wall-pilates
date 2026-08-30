@@ -14,6 +14,8 @@ import Sounds from "@/pages/Sounds";
 import Patterns from "@/pages/Patterns";
 import Profile from "@/pages/Profile";
 import Caregivers from "@/pages/Caregivers";
+import Library from "@/pages/Library";
+import SleepTips from "@/pages/SleepTips";
 
 function LoadingScreen() {
   return (
@@ -173,6 +175,26 @@ export default function App() {
             <RequireAccess>
               <RequireProfile>
                 <Caregivers />
+              </RequireProfile>
+            </RequireAccess>
+          }
+        />
+        <Route
+          path="/biblioteca"
+          element={
+            <RequireAccess>
+              <RequireProfile>
+                <Library />
+              </RequireProfile>
+            </RequireAccess>
+          }
+        />
+        <Route
+          path="/consejos"
+          element={
+            <RequireAccess>
+              <RequireProfile>
+                <SleepTips />
               </RequireProfile>
             </RequireAccess>
           }
