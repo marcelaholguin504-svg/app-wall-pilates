@@ -311,6 +311,7 @@ export default function Profile() {
             Salir de esta cuenta
           </button>
         )}
+        <p className="text-center text-[10px] text-muted-foreground/50 pt-2">Versión: {__APP_COMMIT_HASH__}</p>
       </div>
 
       <Sheet open={photoSheetOpen} onOpenChange={setPhotoSheetOpen}>
