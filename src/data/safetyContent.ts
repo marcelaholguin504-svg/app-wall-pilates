@@ -15,6 +15,23 @@ export const SAFETY_ALERT_MESSAGE = {
   cta: "Entendido",
 };
 
+// Mensaje de "fiebre o se ve enfermo/a" diferenciado por edad: en menores
+// de 3 meses cualquier fiebre es una urgencia médica inmediata (sistema
+// inmune demasiado inmaduro para esperar), por lo que el mensaje es más
+// directo que en el resto de las edades. Nunca da tips caseros para bajar
+// la fiebre — solo deriva a atención médica.
+export const FEVER_ALERT_UNDER_3_MONTHS = {
+  title: "Esto necesita atención médica ahora mismo",
+  body: "En bebés menores de 3 meses, cualquier fiebre se considera una urgencia médica — no hay que esperar a ver si sube o baja. Ve directamente a emergencias o llama a tu pediatra de inmediato.",
+};
+
+export function feverAlertOver3Months(childName: string) {
+  return {
+    title: "Esto necesita la mirada de un profesional",
+    body: `Contacta a tu pediatra hoy mismo para que pueda evaluar a ${childName}. Mientras tanto, mantente atenta a cómo se ve y se comporta.`,
+  };
+}
+
 export const MEDICAL_DISCLAIMER =
   "Duerme Ya ofrece orientación educativa y no sustituye la evaluación de un profesional de salud.";
 
