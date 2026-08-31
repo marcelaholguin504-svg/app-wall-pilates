@@ -42,7 +42,7 @@ export function ChoiceGrid({
   onChange,
   columns = 1,
 }: {
-  options: { id: string; emoji?: string; label: string }[];
+  options: { id: string; emoji?: string; icon?: LucideIcon; label: string }[];
   value: string | null;
   onChange: (id: string) => void;
   columns?: 1 | 2;
@@ -53,6 +53,7 @@ export function ChoiceGrid({
         <ChoiceCard
           key={opt.id}
           emoji={opt.emoji}
+          icon={opt.icon}
           label={opt.label}
           selected={value === opt.id}
           onClick={() => onChange(opt.id)}

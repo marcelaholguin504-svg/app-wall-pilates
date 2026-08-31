@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Heart, Moon } from "lucide-react";
 import { useAppDispatch } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChoiceCard, ChoiceGrid } from "@/components/ChoiceCard";
+import { IconBadge } from "@/components/IconBadge";
 import ProgressDots from "@/components/ProgressDots";
 import { AGE_STAGES, isToddlerStage } from "@/data/ageStages";
 import { CAREGIVER_TYPES } from "@/data/caregiverTypes";
@@ -85,8 +87,8 @@ export default function Onboarding() {
   if (closing) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center">
-        <div className="text-6xl mb-5 animate-breathe">💜</div>
-        <h1 className="font-display text-2xl font-extrabold mb-3">Ya tenemos un punto de partida 💜</h1>
+        <IconBadge icon={Heart} tone="primary" size="lg" className="mb-5 animate-breathe" />
+        <h1 className="font-display text-2xl font-extrabold mb-3">Ya tenemos un punto de partida</h1>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px] mb-2">
           Duerme Ya irá adaptándose a lo que registres y a lo que observes en {name.trim()}.
         </p>
@@ -114,7 +116,9 @@ export default function Onboarding() {
       <div className="flex-1">
         {step === 0 && (
           <div>
-            <h1 className="font-display text-2xl font-extrabold mb-2">Vamos a conocer a tu pequeño 🌙</h1>
+            <h1 className="font-display text-2xl font-extrabold mb-2 flex items-center gap-2">
+              Vamos a conocer a tu pequeño <IconBadge icon={Moon} size="sm" />
+            </h1>
             <p className="text-muted-foreground text-sm mb-6">¿Cómo quieres que lo llamemos?</p>
             <Label htmlFor="child-name">Nombre o apodo</Label>
             <Input
@@ -162,7 +166,7 @@ export default function Onboarding() {
               {problemOptions.map((opt) => (
                 <ChoiceCard
                   key={opt.id}
-                  emoji={opt.emoji}
+                  icon={opt.icon}
                   label={opt.label}
                   selected={mainSleepProblem === opt.id}
                   onClick={() => setMainSleepProblem(opt.id)}

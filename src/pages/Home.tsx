@@ -64,8 +64,11 @@ export default function Home() {
         <div className="flex items-center gap-3.5 mb-5">
           <ChildAvatar photoDataUrl={child.photoDataUrl} size={52} />
           <div>
-            <h1 className="font-display text-xl font-extrabold leading-tight">
-              {greeting(new Date().getHours())}, {child.name} 🌙
+            <h1 className="font-display text-xl font-extrabold leading-tight flex items-center gap-2">
+              <span>
+                {greeting(new Date().getHours())}, {child.name}
+              </span>
+              <IconBadge icon={Moon} size="sm" />
             </h1>
             <p className="text-muted-foreground text-sm">
               {lastEvent ? `Último registro hace ${daysAgo(lastEvent.timestamp) === 0 ? "unas horas" : `${daysAgo(lastEvent.timestamp)} día(s)`}` : "Aún no hay registros hoy"}
