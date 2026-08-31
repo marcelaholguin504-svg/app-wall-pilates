@@ -22,3 +22,8 @@ export function greeting(hour: number): string {
 export function daysAgo(dateISO: string): number {
   return Math.floor((Date.now() - new Date(dateISO).getTime()) / 86400000);
 }
+
+export function weekdayShort(dateISO: string): string {
+  const label = new Date(`${dateISO}T00:00:00`).toLocaleDateString("es", { weekday: "short" });
+  return label.replace(".", "").replace(/^\w/, (c) => c.toUpperCase());
+}

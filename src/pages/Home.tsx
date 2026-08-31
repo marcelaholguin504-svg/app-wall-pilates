@@ -1,21 +1,25 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Moon } from "lucide-react";
 import { useAppState, useAppDispatch } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import ChildAvatar from "@/components/ChildAvatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/IconBadge";
 import { greeting, formatTime, daysAgo } from "@/utils/dateFormat";
 import { computeNextSleepWindow, adjustOffset } from "@/services/sleepWindowEngine";
+import { minutesUntilSleepWindow } from "@/services/proactiveAlertEngine";
+import { SITUATION_ICONS } from "@/data/situationIcons";
 import type { HelpSituation } from "@/types";
 
-const QUICK_SITUATIONS: { id: HelpSituation; emoji: string; label: string }[] = [
-  { id: "no_duerme", emoji: "😣", label: "No logra dormirse" },
-  { id: "desperto_no_vuelve", emoji: "🌙", label: "Se acaba de despertar" },
-  { id: "multiples_despertares", emoji: "🔄", label: "Se está despertando muchas veces" },
-  { id: "siesta_no_funciono", emoji: "💤", label: "Tenemos problemas con las siestas" },
-  { id: "no_se_que_hacer", emoji: "🤍", label: "No sé qué hacer ahora" },
+const QUICK_SITUATIONS: { id: HelpSituation; label: string }[] = [
+  { id: "no_duerme", label: "No logra dormirse" },
+  { id: "desperto_no_vuelve", label: "Se acaba de despertar" },
+  { id: "multiples_despertares", label: "Se está despertando muchas veces" },
+  { id: "siesta_no_funciono", label: "Tenemos problemas con las siestas" },
+  { id: "no_se_que_hacer", label: "No sé qué hacer ahora" },
 ];
 
 export default function Home() {
@@ -30,6 +34,19 @@ export default function Home() {
   );
 
   const lastEvent = state.events[0];
+
+  // Se recalcula cada minuto para que el aviso proactivo aparezca y
+  // desaparezca solo mientras la pantalla sigue abierta, sin recargar.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const minutesUntilWindow = useMemo(
+    () => minutesUntilSleepWindow(window_, state.events, now),
+    [window_, state.events, now]
+  );
 
   if (!child) return null;
 
@@ -55,6 +72,16 @@ export default function Home() {
             </p>
           </div>
         </div>
+
+        {minutesUntilWindow !== null && (
+          <div className="mb-5 rounded-2xl border-2 border-accent/40 bg-accent/10 p-4 flex items-start gap-3 animate-fadeUp">
+            <IconBadge icon={Moon} tone="accent" />
+            <p className="text-sm leading-relaxed text-foreground/90">
+              {child.name} podría estar empezando a cansarse. No es que hagas algo mal — solo es su momento. Faltan
+              aproximadamente {minutesUntilWindow} minutos para su ventana de sueño.
+            </p>
+          </div>
+        )}
 
         <Card className="mb-5 bg-gradient-to-br from-primary/25 via-card to-card border-primary/30">
           <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1.5">Próximo descanso</p>
@@ -88,7 +115,7 @@ export default function Home() {
               onClick={() => goHelp(s.id)}
               className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3.5 text-left touch-target active:scale-[0.98] transition-transform"
             >
-              <span className="text-xl shrink-0">{s.emoji}</span>
+              <IconBadge icon={SITUATION_ICONS[s.id]} />
               <span className="text-sm font-semibold">{s.label}</span>
             </button>
           ))}
