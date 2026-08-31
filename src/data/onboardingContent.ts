@@ -1,14 +1,15 @@
+import { Moon, Frown, Users, AlarmClock, CloudMoon, RefreshCcw, BedDouble, MessageCircle, type LucideIcon } from "lucide-react";
 import type { ImprovementGoal, ScheduleConsistency, SleepProblem } from "@/types";
 
-export const SLEEP_PROBLEM_OPTIONS: { id: SleepProblem; emoji: string; label: string; toddlerOnly?: boolean }[] = [
-  { id: "despierta_muchas_veces", emoji: "🌙", label: "Se despierta muchas veces" },
-  { id: "cuesta_dormirse", emoji: "😣", label: "Le cuesta quedarse dormido" },
-  { id: "solo_duerme_acompanado", emoji: "🫂", label: "Solo duerme si alguien está cerca" },
-  { id: "madruga", emoji: "⏰", label: "Se despierta demasiado temprano" },
-  { id: "siestas_dificiles", emoji: "💤", label: "Las siestas son difíciles o muy cortas" },
-  { id: "cada_noche_diferente", emoji: "🔄", label: "Cada noche parece diferente" },
-  { id: "no_queda_en_cama", emoji: "🛏️", label: "No quiere quedarse en su cama/cuna", toddlerOnly: true },
-  { id: "negocia_hora_dormir", emoji: "🗣️", label: "Negocia o pide cosas para retrasar la hora de dormir", toddlerOnly: true },
+export const SLEEP_PROBLEM_OPTIONS: { id: SleepProblem; icon: LucideIcon; label: string; toddlerOnly?: boolean }[] = [
+  { id: "despierta_muchas_veces", icon: Moon, label: "Se despierta muchas veces" },
+  { id: "cuesta_dormirse", icon: Frown, label: "Le cuesta quedarse dormido" },
+  { id: "solo_duerme_acompanado", icon: Users, label: "Solo duerme si alguien está cerca" },
+  { id: "madruga", icon: AlarmClock, label: "Se despierta demasiado temprano" },
+  { id: "siestas_dificiles", icon: CloudMoon, label: "Las siestas son difíciles o muy cortas" },
+  { id: "cada_noche_diferente", icon: RefreshCcw, label: "Cada noche parece diferente" },
+  { id: "no_queda_en_cama", icon: BedDouble, label: "No quiere quedarse en su cama/cuna", toddlerOnly: true },
+  { id: "negocia_hora_dormir", icon: MessageCircle, label: "Negocia o pide cosas para retrasar la hora de dormir", toddlerOnly: true },
 ];
 
 export const SCHEDULE_CONSISTENCY_OPTIONS: { id: ScheduleConsistency; label: string }[] = [

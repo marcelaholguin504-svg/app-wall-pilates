@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Sun, CloudSun, Moon, type LucideIcon } from "lucide-react";
 import { useAppState, useAppDispatch } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconBadge } from "@/components/IconBadge";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { PlanAction } from "@/types";
 
 type Section = "morning" | "afternoon" | "night";
 
-const SECTIONS: { id: Section; label: string; emoji: string }[] = [
-  { id: "morning", label: "Mañana", emoji: "☀️" },
-  { id: "afternoon", label: "Tarde", emoji: "🌤️" },
-  { id: "night", label: "Noche", emoji: "🌙" },
+const SECTIONS: { id: Section; label: string; icon: LucideIcon }[] = [
+  { id: "morning", label: "Mañana", icon: Sun },
+  { id: "afternoon", label: "Tarde", icon: CloudSun },
+  { id: "night", label: "Noche", icon: Moon },
 ];
 
 export default function Plan() {
@@ -51,7 +52,7 @@ export default function Plan() {
             <Card key={s.id}>
               <div className="flex items-center justify-between mb-3">
                 <p className="font-display font-bold flex items-center gap-2">
-                  <span>{s.emoji}</span> {s.label.toUpperCase()}
+                  <IconBadge icon={s.icon} size="sm" /> {s.label.toUpperCase()}
                 </p>
                 <button onClick={() => openEdit(s.id)} className="text-xs font-bold text-primary touch-target">
                   Editar

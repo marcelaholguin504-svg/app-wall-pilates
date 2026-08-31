@@ -1,18 +1,19 @@
+import { User, UserRound, Baby, Heart, type LucideIcon } from "lucide-react";
 import type { CaregiverType } from "@/types";
 
-export const CAREGIVER_TYPES: { id: CaregiverType; label: string; emoji: string }[] = [
-  { id: "mama", label: "Mamá", emoji: "👩" },
-  { id: "papa", label: "Papá", emoji: "👨" },
-  { id: "abuela", label: "Abuela", emoji: "👵" },
-  { id: "abuelo", label: "Abuelo", emoji: "👴" },
-  { id: "ninera", label: "Niñera/cuidadora", emoji: "👩‍🍼" },
-  { id: "otro", label: "Otro cuidador", emoji: "❤️" },
+export const CAREGIVER_TYPES: { id: CaregiverType; label: string; icon: LucideIcon }[] = [
+  { id: "mama", label: "Mamá", icon: User },
+  { id: "papa", label: "Papá", icon: User },
+  { id: "abuela", label: "Abuela", icon: UserRound },
+  { id: "abuelo", label: "Abuelo", icon: UserRound },
+  { id: "ninera", label: "Niñera/cuidadora", icon: Baby },
+  { id: "otro", label: "Otro cuidador", icon: Heart },
 ];
 
 export function caregiverTypeLabel(type: CaregiverType): string {
   return CAREGIVER_TYPES.find((c) => c.id === type)?.label || type;
 }
 
-export function caregiverTypeEmoji(type: CaregiverType): string {
-  return CAREGIVER_TYPES.find((c) => c.id === type)?.emoji || "❤️";
+export function caregiverTypeIcon(type: CaregiverType): LucideIcon {
+  return CAREGIVER_TYPES.find((c) => c.id === type)?.icon || Heart;
 }

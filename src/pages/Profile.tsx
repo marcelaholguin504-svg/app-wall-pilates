@@ -13,8 +13,9 @@ import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ChoiceCard } from "@/components/ChoiceCard";
+import { IconBadge } from "@/components/IconBadge";
 import { AGE_STAGES } from "@/data/ageStages";
-import { CAREGIVER_TYPES, caregiverTypeEmoji, caregiverTypeLabel } from "@/data/caregiverTypes";
+import { CAREGIVER_TYPES, caregiverTypeIcon, caregiverTypeLabel } from "@/data/caregiverTypes";
 import { SLEEP_PROBLEM_OPTIONS, SCHEDULE_CONSISTENCY_OPTIONS, IMPROVEMENT_GOAL_OPTIONS } from "@/data/onboardingContent";
 import { isAcceptedImage, resizeImageToDataUrl } from "@/services/photoService";
 import { isToddlerStage } from "@/data/ageStages";
@@ -162,9 +163,10 @@ export default function Profile() {
           <ChildAvatar photoDataUrl={child.photoDataUrl} size={92} />
         </button>
         <h1 className="font-display text-xl font-extrabold mt-3">{child.name}</h1>
-        <p className="text-muted-foreground text-sm">
-          {AGE_STAGES.find((s) => s.id === child.ageStage)?.label} · {caregiverTypeEmoji(child.caregiverType)}{" "}
-          {caregiverTypeLabel(child.caregiverType)}
+        <p className="text-muted-foreground text-sm flex items-center justify-center gap-1.5">
+          <span>{AGE_STAGES.find((s) => s.id === child.ageStage)?.label} ·</span>
+          <IconBadge icon={caregiverTypeIcon(child.caregiverType)} size="sm" />
+          <span>{caregiverTypeLabel(child.caregiverType)}</span>
         </p>
         <p className="text-[11px] text-muted-foreground/70 mt-2 max-w-[280px] mx-auto leading-relaxed">
           La foto es opcional y privada. Nunca se usa para publicidad ni reconocimiento facial.
@@ -209,7 +211,7 @@ export default function Profile() {
             {CAREGIVER_TYPES.map((c) => (
               <ChoiceCard
                 key={c.id}
-                emoji={c.emoji}
+                icon={c.icon}
                 label={c.label}
                 selected={form.caregiverType === c.id}
                 onClick={() => setForm({ ...form, caregiverType: c.id })}
@@ -225,7 +227,7 @@ export default function Profile() {
             {problemOptions.map((o) => (
               <ChoiceCard
                 key={o.id}
-                emoji={o.emoji}
+                icon={o.icon}
                 label={o.label}
                 selected={form.mainSleepProblem === o.id}
                 onClick={() => setForm({ ...form, mainSleepProblem: o.id })}

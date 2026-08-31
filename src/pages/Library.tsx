@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { BookOpen, Music2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/IconBadge";
 
 // Contenido tal como fue redactado — no se reescribe aquí, solo se le da
 // formato de pantalla. Solo se mencionan títulos y nombres, nunca letras de
@@ -52,7 +54,9 @@ export default function Library() {
 
       <div className="flex flex-col gap-4">
         <Card>
-          <h2 className="font-display text-lg font-bold mb-4">📚 Libros recomendados para leer antes de dormir</h2>
+          <h2 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
+            <IconBadge icon={BookOpen} /> Libros recomendados para leer antes de dormir
+          </h2>
           <div className="flex flex-col gap-4">
             {BOOKS_BY_AGE.map((group) => (
               <div key={group.age}>
@@ -68,7 +72,9 @@ export default function Library() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">🎵 Canciones de cuna tradicionales</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={Music2} /> Canciones de cuna tradicionales
+          </h2>
           <p className="text-sm text-foreground/90 leading-relaxed mb-4">
             Estas son canciones de generación en generación — la app solo menciona el nombre, para que las tararees
             tú mismo/a de memoria, como se ha hecho siempre en las familias:
