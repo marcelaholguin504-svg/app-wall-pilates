@@ -4,7 +4,8 @@ import { useAppState } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
-import { CloudRain, Waves, AudioLines, AudioWaveform, Radio, Fan, CarFront, Music2, Heart, Clock } from "lucide-react";
+import { IconBadge } from "@/components/IconBadge";
+import { CloudRain, Waves, AudioLines, AudioWaveform, Radio, Fan, CarFront, Music2, Heart, Clock, BookOpen } from "lucide-react";
 import { SOUNDS, TIMER_OPTIONS } from "@/data/soundsData";
 import { articlesForProblem } from "@/data/educationalContent";
 import { soundEngine } from "@/services/soundEngine";
@@ -60,9 +61,12 @@ export default function Sounds() {
 
         <button
           onClick={() => navigate("/biblioteca")}
-          className="w-full rounded-2xl p-4 mb-6 flex items-center justify-between border-2 border-border bg-card touch-target"
+          className="w-full rounded-2xl p-4 mb-6 flex items-center justify-between gap-3 border-2 border-border bg-card touch-target active:scale-[0.98] transition-transform"
         >
-          <span className="text-sm font-bold">📚 Biblioteca</span>
+          <span className="flex items-center gap-3">
+            <IconBadge icon={BookOpen} />
+            <span className="text-sm font-bold">Biblioteca</span>
+          </span>
           <span className="text-muted-foreground">→</span>
         </button>
 
@@ -74,11 +78,11 @@ export default function Sounds() {
               <button
                 key={sound.id}
                 onClick={() => toggleSound(sound)}
-                className={`rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all touch-target ${
+                className={`rounded-2xl p-4 flex flex-col items-center gap-2 border-2 transition-all touch-target active:scale-[0.98] ${
                   active ? "bg-primary/20 border-primary" : "bg-card border-border"
                 }`}
               >
-                <Icon className={`w-7 h-7 ${active ? "text-primary animate-breathe" : "text-foreground/80"}`} />
+                <IconBadge icon={Icon} tone={active ? "primary" : "muted"} size="lg" className={active ? "animate-breathe" : ""} />
                 <span className="text-sm font-semibold text-center">{sound.label}</span>
                 {active && <span className="text-[10px] text-primary font-bold uppercase">Sonando</span>}
               </button>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Users, TrendingUp } from "lucide-react";
 import { useAppDispatch, useAppState } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import Screen from "@/components/Screen";
@@ -265,12 +266,18 @@ export default function Profile() {
           {saved ? "Guardado ✓" : "Guardar cambios"}
         </Button>
 
-        <button onClick={() => navigate("/cuidadores")} className="text-sm font-bold text-primary text-center">
-          👨‍👩‍👧 Personas que cuidan a {child.name} →
+        <button
+          onClick={() => navigate("/cuidadores")}
+          className="flex items-center justify-center gap-1.5 text-sm font-bold text-primary text-center"
+        >
+          <Users className="w-4 h-4" /> Personas que cuidan a {child.name} →
         </button>
 
-        <button onClick={() => navigate("/patrones")} className="text-sm font-bold text-primary text-center">
-          📈 Ver patrones →
+        <button
+          onClick={() => navigate("/patrones")}
+          className="flex items-center justify-center gap-1.5 text-sm font-bold text-primary text-center"
+        >
+          <TrendingUp className="w-4 h-4" /> Ver patrones →
         </button>
 
         <Card className="text-center">

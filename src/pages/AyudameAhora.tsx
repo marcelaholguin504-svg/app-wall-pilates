@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { X, Stethoscope, MoonStar } from "lucide-react";
 import { useAppState } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChoiceCard } from "@/components/ChoiceCard";
+import { IconBadge } from "@/components/IconBadge";
 import { SITUATION_OPTIONS, FOLLOW_UP_QUESTIONS } from "@/data/guidanceContent";
 import { SAFETY_FILTER_QUESTION, SAFETY_FILTER_OPTIONS } from "@/data/safetyContent";
+import { SITUATION_ICONS, SAFETY_FLAG_ICONS } from "@/data/situationIcons";
 import { getGuidanceOutcome, getSafetyAlertContent } from "@/services/guidanceEngine";
 import { trackEvent } from "@/services/events";
 import type { HelpSituation, SafetyFlag } from "@/types";
@@ -77,8 +80,11 @@ export default function AyudameAhora() {
 
   return (
     <div className="min-h-screen px-5 pt-6 pb-10">
-      <button onClick={() => navigate("/hoy")} className="text-muted-foreground text-sm font-semibold mb-4 touch-target">
-        ✕ Cerrar
+      <button
+        onClick={() => navigate("/hoy")}
+        className="flex items-center gap-1.5 text-muted-foreground text-sm font-semibold mb-4 touch-target"
+      >
+        <X className="w-4 h-4" /> Cerrar
       </button>
 
       {phase === "entrada" && (
@@ -87,7 +93,13 @@ export default function AyudameAhora() {
           <p className="text-muted-foreground text-sm mb-6">¿Qué está pasando?</p>
           <div className="flex flex-col gap-2.5">
             {SITUATION_OPTIONS.map((opt) => (
-              <ChoiceCard key={opt.id} label={opt.label} selected={false} onClick={() => chooseSituation(opt.id)} />
+              <ChoiceCard
+                key={opt.id}
+                icon={SITUATION_ICONS[opt.id]}
+                label={opt.label}
+                selected={false}
+                onClick={() => chooseSituation(opt.id)}
+              />
             ))}
           </div>
         </>
@@ -98,7 +110,13 @@ export default function AyudameAhora() {
           <h1 className="font-display text-2xl font-extrabold mb-6 leading-snug">{SAFETY_FILTER_QUESTION}</h1>
           <div className="flex flex-col gap-2.5">
             {SAFETY_FILTER_OPTIONS.map((opt) => (
-              <ChoiceCard key={opt.id} label={opt.label} selected={false} onClick={() => chooseSafety(opt.id)} />
+              <ChoiceCard
+                key={opt.id}
+                icon={SAFETY_FLAG_ICONS[opt.id]}
+                label={opt.label}
+                selected={false}
+                onClick={() => chooseSafety(opt.id)}
+              />
             ))}
           </div>
         </>
@@ -106,7 +124,7 @@ export default function AyudameAhora() {
 
       {phase === "alerta" && alertContent && (
         <div className="flex flex-col items-center text-center pt-10">
-          <div className="text-6xl mb-5">🩺</div>
+          <IconBadge icon={Stethoscope} tone="destructive" size="lg" className="mb-5" />
           <h2 className="font-display text-xl font-extrabold mb-3 text-destructive">{alertContent.title}</h2>
           <p className="text-foreground/80 text-sm leading-relaxed mb-8 max-w-[320px]">{alertContent.body}</p>
           <Button size="lg" onClick={() => navigate("/hoy")}>
@@ -180,7 +198,7 @@ export default function AyudameAhora() {
 
       {phase === "exito" && (
         <div className="flex flex-col items-center text-center pt-14">
-          <div className="text-6xl mb-5 animate-breathe">🌙</div>
+          <IconBadge icon={MoonStar} tone="accent" size="lg" className="mb-5 animate-breathe" />
           <h2 className="font-display text-xl font-extrabold mb-3">Qué bueno que ayudó</h2>
           <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-[300px]">
             Respira un momento tú también. Puedes registrar esto en Registrar si quieres llevar la cuenta.

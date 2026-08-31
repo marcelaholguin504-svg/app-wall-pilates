@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Lightbulb } from "lucide-react";
 import { useAppState, useAppDispatch } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
@@ -79,9 +80,9 @@ export default function Plan() {
 
         <button
           onClick={() => navigate("/consejos")}
-          className="text-sm font-bold text-primary text-center mt-4"
+          className="flex items-center justify-center gap-1.5 text-sm font-bold text-primary text-center mt-4"
         >
-          💡 Consejos para dormir mejor
+          <Lightbulb className="w-4 h-4" /> Consejos para dormir mejor
         </button>
       </div>
 

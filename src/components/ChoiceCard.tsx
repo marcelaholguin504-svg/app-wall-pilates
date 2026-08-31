@@ -1,13 +1,19 @@
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { IconBadge, type IconBadgeTone } from "@/components/IconBadge";
 
 export function ChoiceCard({
   emoji,
+  icon,
+  iconTone = "primary",
   label,
   selected,
   onClick,
   className = "",
 }: {
   emoji?: string;
+  icon?: LucideIcon;
+  iconTone?: IconBadgeTone;
   label: string;
   selected?: boolean;
   onClick: () => void;
@@ -18,12 +24,13 @@ export function ChoiceCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "text-left rounded-2xl px-4 py-4 border-2 font-semibold transition-all touch-target flex items-center gap-3",
+        "text-left rounded-2xl px-4 py-4 border-2 font-semibold transition-all touch-target flex items-center gap-3 active:scale-[0.98]",
         selected ? "bg-primary/20 border-primary scale-[1.01]" : "bg-card border-border",
         className
       )}
     >
-      {emoji && <span className="text-2xl shrink-0">{emoji}</span>}
+      {icon && <IconBadge icon={icon} tone={selected ? "primary" : iconTone} />}
+      {!icon && emoji && <span className="text-2xl shrink-0">{emoji}</span>}
       <span className="text-sm leading-snug">{label}</span>
     </button>
   );

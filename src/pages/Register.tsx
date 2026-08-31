@@ -1,26 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Sunrise, Moon, Sun, MoonStar, Eye, TrendingUp } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAppState, useAppDispatch } from "@/hooks/useApp";
 import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/IconBadge";
 import { formatDayTime } from "@/utils/dateFormat";
 import type { SleepEventType } from "@/types";
 
-const EVENT_TYPES: { id: SleepEventType; emoji: string; label: string }[] = [
-  { id: "wake", emoji: "🌅", label: "Despertó" },
-  { id: "nap_start", emoji: "💤", label: "Empezó una siesta" },
-  { id: "nap_end", emoji: "☀️", label: "Terminó una siesta" },
-  { id: "night_sleep", emoji: "🌙", label: "Se durmió por la noche" },
-  { id: "night_wake", emoji: "👀", label: "Despertar nocturno" },
+const EVENT_TYPES: { id: SleepEventType; icon: LucideIcon; label: string }[] = [
+  { id: "wake", icon: Sunrise, label: "Despertó" },
+  { id: "nap_start", icon: Moon, label: "Empezó una siesta" },
+  { id: "nap_end", icon: Sun, label: "Terminó una siesta" },
+  { id: "night_sleep", icon: MoonStar, label: "Se durmió por la noche" },
+  { id: "night_wake", icon: Eye, label: "Despertar nocturno" },
 ];
 
 function eventLabel(type: SleepEventType) {
   return EVENT_TYPES.find((e) => e.id === type)?.label || type;
 }
 
-function eventEmoji(type: SleepEventType) {
-  return EVENT_TYPES.find((e) => e.id === type)?.emoji || "🌙";
+function eventIcon(type: SleepEventType): LucideIcon {
+  return EVENT_TYPES.find((e) => e.id === type)?.icon || Moon;
 }
 
 export default function RegisterPage() {
@@ -34,7 +37,7 @@ export default function RegisterPage() {
 
   function logEvent(type: SleepEventType) {
     dispatch({ type: "ADD_EVENT", eventType: type });
-    setToast(`${eventEmoji(type)} ${eventLabel(type)} — registrado`);
+    setToast(`${eventLabel(type)} — registrado`);
     setTimeout(() => setToast(""), 2000);
   }
 
@@ -53,15 +56,15 @@ export default function RegisterPage() {
               onClick={() => logEvent(type.id)}
               className="bg-card border border-border rounded-2xl py-5 px-3 flex flex-col items-center gap-2 touch-target active:scale-95 transition-transform"
             >
-              <span className="text-2xl">{type.emoji}</span>
+              <IconBadge icon={type.icon} />
               <span className="text-xs font-semibold text-center leading-tight">{type.label}</span>
             </button>
           ))}
         </div>
 
         <div className="flex justify-end mb-2">
-          <button onClick={() => navigate("/patrones")} className="text-xs font-bold text-primary">
-            📈 Ver patrones →
+          <button onClick={() => navigate("/patrones")} className="flex items-center gap-1 text-xs font-bold text-primary">
+            <TrendingUp className="w-3.5 h-3.5" /> Ver patrones →
           </button>
         </div>
 
@@ -74,7 +77,7 @@ export default function RegisterPage() {
           )}
           {todayEvents.map((e) => (
             <Card key={e.id} className="flex items-center gap-3 py-3">
-              <span className="text-lg shrink-0">{eventEmoji(e.type)}</span>
+              <IconBadge icon={eventIcon(e.type)} size="sm" />
               <span className="flex-1 text-sm font-semibold">{eventLabel(e.type)}</span>
               <span className="text-xs text-muted-foreground">{formatDayTime(e.timestamp)}</span>
               <button
