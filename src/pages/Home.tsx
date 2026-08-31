@@ -8,8 +8,9 @@ import ChildAvatar from "@/components/ChildAvatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconBadge } from "@/components/IconBadge";
+import { SleepWindowRing } from "@/components/SleepWindowRing";
 import { greeting, formatTime, daysAgo } from "@/utils/dateFormat";
-import { computeNextSleepWindow, adjustOffset } from "@/services/sleepWindowEngine";
+import { computeNextSleepWindow, computeWindowProgress, adjustOffset } from "@/services/sleepWindowEngine";
 import { minutesUntilSleepWindow } from "@/services/proactiveAlertEngine";
 import { SITUATION_ICONS } from "@/data/situationIcons";
 import type { HelpSituation } from "@/types";
@@ -47,6 +48,8 @@ export default function Home() {
     () => minutesUntilSleepWindow(window_, state.events, now),
     [window_, state.events, now]
   );
+
+  const windowProgress = useMemo(() => (window_ ? computeWindowProgress(window_, now) : 0), [window_, now]);
 
   if (!child) return null;
 
@@ -89,20 +92,23 @@ export default function Home() {
         <Card className="mb-5 bg-gradient-to-br from-primary/25 via-card to-card border-primary/30">
           <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1.5">Próximo descanso</p>
           {window_ ? (
-            <>
-              <p className="font-display text-2xl font-extrabold mb-1">
-                {formatTime(window_.startISO)} – {formatTime(window_.endISO)}
-              </p>
-              <p className="text-muted-foreground text-xs mb-4">Observa también sus señales de sueño.</p>
-              <div className="flex gap-2.5">
-                <Button variant="secondary" size="sm" onClick={() => adjustWindow("earlier")}>
-                  Ya tiene sueño
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => adjustWindow("later")}>
-                  Todavía no
-                </Button>
+            <div className="flex items-center gap-4">
+              <SleepWindowRing progress={windowProgress} size={60} />
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-2xl font-extrabold mb-1">
+                  {formatTime(window_.startISO)} – {formatTime(window_.endISO)}
+                </p>
+                <p className="text-muted-foreground text-xs mb-4">Observa también sus señales de sueño.</p>
+                <div className="flex gap-2.5">
+                  <Button variant="secondary" size="sm" onClick={() => adjustWindow("earlier")}>
+                    Ya tiene sueño
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => adjustWindow("later")}>
+                    Todavía no
+                  </Button>
+                </div>
               </div>
-            </>
+            </div>
           ) : (
             <p className="text-muted-foreground text-sm leading-relaxed">
               No tenemos suficientes registros todavía. Registra cuándo se despierta y empezaremos a mostrarte su próxima ventana orientativa.
