@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Moon, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/IconBadge";
 
 type Status = "idle" | "loading" | "sent" | "denied" | "error";
 
@@ -28,14 +30,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col justify-center px-6 py-10">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-3">🌙</div>
+        <IconBadge icon={Moon} size="lg" className="mx-auto mb-3" />
         <h1 className="font-display text-2xl font-extrabold mb-2">Duerme Ya</h1>
       </div>
 
       {status === "sent" && (
         <Card className="text-center py-8">
+          <IconBadge icon={Heart} className="mx-auto mb-3" />
           <p className="text-lg font-bold leading-relaxed">
-            Listo. Revisa tu correo — te mandamos un enlace para entrar a Duerme Ya. 💜
+            Listo. Revisa tu correo — te mandamos un enlace para entrar a Duerme Ya.
           </p>
         </Card>
       )}

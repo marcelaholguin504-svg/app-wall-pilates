@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Crown, Heart } from "lucide-react";
 import { useAppState } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { IconBadge } from "@/components/IconBadge";
 import { MAX_INVITED_CAREGIVERS, type AccountMember } from "@/types";
 import { fetchAccountMembers, inviteCaregiver, revokeCaregiver } from "@/services/accountService";
 
@@ -113,9 +115,7 @@ export default function Caregivers() {
         <div className="flex flex-col gap-2.5 mb-6">
           {members.map((m) => (
             <Card key={m.id} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-lg shrink-0">
-                {m.role === "admin" ? "👑" : "❤️"}
-              </div>
+              <IconBadge icon={m.role === "admin" ? Crown : Heart} />
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">{m.email}</p>
                 <p className="text-xs text-muted-foreground">{m.role === "admin" ? "Administradora" : "Cuidador"}</p>
@@ -152,7 +152,7 @@ export default function Caregivers() {
         <SheetContent>
           {inviteSentTo ? (
             <div className="text-center py-4">
-              <div className="text-4xl mb-3">💜</div>
+              <IconBadge icon={Heart} className="mx-auto mb-3" />
               <h3 className="font-display text-lg font-extrabold mb-2">Invitación enviada</h3>
               <p className="text-sm text-muted-foreground mb-6">
                 Le mandamos un enlace de acceso a <span className="font-semibold text-foreground">{inviteSentTo}</span>.

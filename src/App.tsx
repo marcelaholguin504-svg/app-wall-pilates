@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Moon } from "lucide-react";
 import { useAppState } from "@/hooks/useApp";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { IconBadge } from "@/components/IconBadge";
 
 import Login from "@/pages/Login";
 import Privacy from "@/pages/Privacy";
@@ -38,7 +40,7 @@ function RequireAccess({ children }: { children: React.ReactNode }) {
   if (!membership) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center px-8">
-        <div className="text-5xl mb-4">🌙</div>
+        <IconBadge icon={Moon} size="lg" className="mb-4" />
         <h1 className="font-display text-xl font-extrabold mb-3">No encontramos acceso activo</h1>
         <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-[300px]">
           Este correo ya no tiene acceso a Duerme Ya, o tu sesión ya no es válida. Vuelve a intentar desde el inicio.
