@@ -4,7 +4,7 @@
 
 import type { AgeStage, HelpSituation, SafetyFlag } from "@/types";
 import { getGuidance } from "@/data/guidanceContent";
-import { SAFETY_ALERT_MESSAGE } from "@/data/safetyContent";
+import { SAFETY_ALERT_MESSAGE, FEVER_ALERT_UNDER_3_MONTHS, feverAlertOver3Months } from "@/data/safetyContent";
 
 export interface GuidanceOutcome {
   blocked: boolean;
@@ -19,6 +19,24 @@ export interface GuidanceOutcome {
 // "solo el sueño" — incluyendo "prefiero no responder ahora" (sección 8).
 export function safetyFilterBlocks(flag: SafetyFlag): boolean {
   return flag !== "solo_sueno";
+}
+
+export interface SafetyAlertContent {
+  title: string;
+  body: string;
+  cta: string;
+}
+
+// Contenido del mensaje de derivación médica. Solo "fiebre" tiene mensaje
+// distinto según la edad (en menores de 3 meses cualquier fiebre es
+// urgencia inmediata); "respiracion" y "prefiero_no_responder" siempre usan
+// el mensaje genérico, sin excepción y sin tips caseros en ningún caso.
+export function getSafetyAlertContent(flag: SafetyFlag, ageStage: AgeStage, childName: string): SafetyAlertContent {
+  if (flag === "fiebre") {
+    const content = ageStage === "0-3m" ? FEVER_ALERT_UNDER_3_MONTHS : feverAlertOver3Months(childName);
+    return { ...content, cta: SAFETY_ALERT_MESSAGE.cta };
+  }
+  return SAFETY_ALERT_MESSAGE;
 }
 
 export function getGuidanceOutcome(situation: HelpSituation, ageStage: AgeStage, safetyFlag: SafetyFlag): GuidanceOutcome {

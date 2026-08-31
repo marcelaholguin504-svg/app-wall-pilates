@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChoiceCard } from "@/components/ChoiceCard";
 import { SITUATION_OPTIONS, FOLLOW_UP_QUESTIONS } from "@/data/guidanceContent";
 import { SAFETY_FILTER_QUESTION, SAFETY_FILTER_OPTIONS } from "@/data/safetyContent";
-import { getGuidanceOutcome } from "@/services/guidanceEngine";
+import { getGuidanceOutcome, getSafetyAlertContent } from "@/services/guidanceEngine";
 import { trackEvent } from "@/services/events";
 import type { HelpSituation, SafetyFlag } from "@/types";
 
@@ -22,6 +22,7 @@ export default function AyudameAhora() {
   const [phase, setPhase] = useState<Phase>(preselect ? "seguridad" : "entrada");
   const [situation, setSituation] = useState<HelpSituation | null>(preselect || null);
   const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
+  const [safetyFlag, setSafetyFlag] = useState<SafetyFlag | null>(null);
 
   useEffect(() => {
     trackEvent("ayudame_ahora_iniciado", { situation, viaPreselect: Boolean(preselect) });
@@ -37,6 +38,7 @@ export default function AyudameAhora() {
   }
 
   function chooseSafety(flag: SafetyFlag) {
+    setSafetyFlag(flag);
     if (flag !== "solo_sueno") {
       trackEvent("alerta_seguridad_mostrada", { situation, flag });
       setPhase("alerta");
@@ -71,6 +73,7 @@ export default function AyudameAhora() {
   }
 
   const outcome = situation ? getGuidanceOutcome(situation, child.ageStage, "solo_sueno") : null;
+  const alertContent = safetyFlag ? getSafetyAlertContent(safetyFlag, child.ageStage, child.name) : null;
 
   return (
     <div className="min-h-screen px-5 pt-6 pb-10">
@@ -101,16 +104,13 @@ export default function AyudameAhora() {
         </>
       )}
 
-      {phase === "alerta" && (
+      {phase === "alerta" && alertContent && (
         <div className="flex flex-col items-center text-center pt-10">
           <div className="text-6xl mb-5">🩺</div>
-          <h2 className="font-display text-xl font-extrabold mb-3 text-destructive">Esto va más allá del sueño</h2>
-          <p className="text-foreground/80 text-sm leading-relaxed mb-8 max-w-[320px]">
-            Lo que describes podría necesitar la mirada de un profesional de salud. No podemos evaluarlo por ti: lo más
-            seguro es que contactes a tu pediatra o a los servicios de salud de tu localidad.
-          </p>
+          <h2 className="font-display text-xl font-extrabold mb-3 text-destructive">{alertContent.title}</h2>
+          <p className="text-foreground/80 text-sm leading-relaxed mb-8 max-w-[320px]">{alertContent.body}</p>
           <Button size="lg" onClick={() => navigate("/hoy")}>
-            Entendido
+            {alertContent.cta}
           </Button>
         </div>
       )}
