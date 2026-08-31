@@ -51,6 +51,19 @@ export default function Home() {
 
   const windowProgress = useMemo(() => (window_ ? computeWindowProgress(window_, now) : 0), [window_, now]);
 
+  // Hitos dentro del anillo: si ya se registró que empezó una siesta o que
+  // se durmió por la noche DESPUÉS del último despertar (la ancla de esta
+  // ventana), lo marcamos como un punto sobre el arco.
+  const milestones = useMemo(() => {
+    if (!window_) return [];
+    const anchorMs = new Date(window_.anchorISO).getTime();
+    return state.events
+      .filter((e) => e.type === "nap_start" || e.type === "night_sleep")
+      .map((e) => new Date(e.timestamp).getTime())
+      .filter((t) => t > anchorMs && t <= now)
+      .map((t) => computeWindowProgress(window_, t));
+  }, [window_, state.events, now]);
+
   if (!child) return null;
 
   function goHelp(situation?: HelpSituation) {
@@ -90,25 +103,27 @@ export default function Home() {
         )}
 
         <Card className="mb-5 bg-gradient-to-br from-primary/25 via-card to-card border-primary/30">
-          <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1.5">Próximo descanso</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-primary mb-2">Próximo descanso</p>
           {window_ ? (
-            <div className="flex items-center gap-4">
-              <SleepWindowRing progress={windowProgress} size={60} />
-              <div className="flex-1 min-w-0">
-                <p className="font-display text-2xl font-extrabold mb-1">
-                  {formatTime(window_.startISO)} – {formatTime(window_.endISO)}
-                </p>
-                <p className="text-muted-foreground text-xs mb-4">Observa también sus señales de sueño.</p>
-                <div className="flex gap-2.5">
-                  <Button variant="secondary" size="sm" onClick={() => adjustWindow("earlier")}>
-                    Ya tiene sueño
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => adjustWindow("later")}>
-                    Todavía no
-                  </Button>
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <SleepWindowRing progress={windowProgress} milestones={milestones} size={92} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-2xl font-extrabold mb-1">
+                    {formatTime(window_.startISO)} – {formatTime(window_.endISO)}
+                  </p>
+                  <p className="text-muted-foreground text-xs">Observa también sus señales de sueño.</p>
                 </div>
               </div>
-            </div>
+              <div className="flex gap-2.5">
+                <Button variant="secondary" size="sm" onClick={() => adjustWindow("earlier")}>
+                  Ya tiene sueño
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => adjustWindow("later")}>
+                  Todavía no
+                </Button>
+              </div>
+            </>
           ) : (
             <p className="text-muted-foreground text-sm leading-relaxed">
               No tenemos suficientes registros todavía. Registra cuándo se despierta y empezaremos a mostrarte su próxima ventana orientativa.

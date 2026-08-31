@@ -21,16 +21,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<AccountMember | null>(null);
   const resolvingEmailRef = useRef<string | null>(null);
+  const hasResolvedOnceRef = useRef(false);
+  const membershipRef = useRef<AccountMember | null>(null);
+  useEffect(() => {
+    membershipRef.current = membership;
+  }, [membership]);
 
-  async function resolveMembership(email: string) {
+  // `background = true` es una revalidación silenciosa (refresco de token,
+  // la pestaña recupera el foco) — Supabase la dispara sola, sin que la
+  // usuaria haga nada. Si esa revalidación falla o no encuentra membresía
+  // pero YA teníamos una válida, no la borramos: es mucho más probable que
+  // sea un hipo de red pasajero que una revocación real, y borrarla hacía
+  // que toda la pantalla (incluyendo "Próximo descanso" y su anillo)
+  // desapareciera de la nada durante el uso normal de la app.
+  async function resolveMembership(email: string, { background = false }: { background?: boolean } = {}) {
     if (resolvingEmailRef.current === email) return;
     resolvingEmailRef.current = email;
-    // Idempotente: si había una invitación pendiente para este correo, la
-    // activa. No hace nada si no la había.
-    await acceptPendingInvitation();
-    const m = await fetchMyMembership(email);
-    setMembership(m);
-    if (m) trackEvent("sesion_iniciada", { role: m.role });
+    try {
+      // Idempotente: si había una invitación pendiente para este correo, la
+      // activa. No hace nada si no la había.
+      await acceptPendingInvitation();
+      const m = await fetchMyMembership(email);
+      if (background && !m && membershipRef.current) return;
+      setMembership(m);
+      if (m) trackEvent("sesion_iniciada", { role: m.role });
+    } finally {
+      resolvingEmailRef.current = null;
+    }
   }
 
   useEffect(() => {
@@ -43,9 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(data.session);
         const email = data.session?.user?.email;
         if (email) {
-          resolveMembership(email).finally(() => mounted && setLoading(false));
+          resolveMembership(email).finally(() => {
+            if (!mounted) return;
+            setLoading(false);
+            hasResolvedOnceRef.current = true;
+          });
         } else {
           setLoading(false);
+          hasResolvedOnceRef.current = true;
         }
       })
       .catch(() => {
@@ -55,14 +77,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
         setSession(null);
         setLoading(false);
+        hasResolvedOnceRef.current = true;
       });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       const email = newSession?.user?.email;
       if (email) {
-        setLoading(true);
-        resolveMembership(email).finally(() => setLoading(false));
+        // Solo la resolución inicial bloquea la pantalla con "Cargando…".
+        // Supabase revalida la sesión sola de vez en cuando (refresco de
+        // token, foco de la pestaña) — eso no debe hacer que toda la app
+        // desaparezca detrás de un loader cada vez que pasa.
+        if (!hasResolvedOnceRef.current) {
+          setLoading(true);
+          resolveMembership(email).finally(() => {
+            setLoading(false);
+            hasResolvedOnceRef.current = true;
+          });
+        } else {
+          void resolveMembership(email, { background: true });
+        }
       } else {
         setMembership(null);
       }
