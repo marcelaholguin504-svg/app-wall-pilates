@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { Bath, Shirt, Droplet, BedDouble, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { IconBadge } from "@/components/IconBadge";
 
 // Contenido tal como fue redactado — no se reescribe aquí, solo se le da
 // formato de pantalla.
@@ -52,7 +54,9 @@ export default function SleepTips() {
 
       <div className="flex flex-col gap-4">
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">🛁 Rutina de baño antes de dormir</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={Bath} /> Rutina de baño antes de dormir
+          </h2>
           <ol className="list-decimal pl-5 flex flex-col gap-1.5 text-sm text-foreground/90 leading-relaxed">
             {BATH_ROUTINE.map((item) => (
               <li key={item}>{item}</li>
@@ -61,7 +65,9 @@ export default function SleepTips() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">👕 Telas recomendadas</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={Shirt} /> Telas recomendadas
+          </h2>
           <ul className="list-disc pl-5 flex flex-col gap-1.5 text-sm text-foreground/90 leading-relaxed">
             {FABRICS.map((item) => (
               <li key={item}>{item}</li>
@@ -70,7 +76,9 @@ export default function SleepTips() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">🧴 Cuidado de la piel antes de dormir</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={Droplet} /> Cuidado de la piel antes de dormir
+          </h2>
           <ul className="list-disc pl-5 flex flex-col gap-1.5 text-sm text-foreground/90 leading-relaxed">
             {SKIN_CARE.map((item) => (
               <li key={item}>{item}</li>
@@ -79,7 +87,9 @@ export default function SleepTips() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">🛏️ Sábanas recomendadas</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={BedDouble} /> Sábanas recomendadas
+          </h2>
           <ul className="list-disc pl-5 flex flex-col gap-1.5 text-sm text-foreground/90 leading-relaxed">
             {SHEETS.map((item) => (
               <li key={item}>{item}</li>
@@ -88,7 +98,9 @@ export default function SleepTips() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-bold mb-3">⏰ Hábitos que ayudan</h2>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <IconBadge icon={Clock} /> Hábitos que ayudan
+          </h2>
           <ul className="list-disc pl-5 flex flex-col gap-1.5 text-sm text-foreground/90 leading-relaxed">
             {HABITS.map((item) => (
               <li key={item}>{item}</li>
