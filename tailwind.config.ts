@@ -59,10 +59,16 @@ export default {
       fontFamily: {
         sans: ["'Nunito'", "system-ui", "-apple-system", "sans-serif"],
         display: ["'Quicksand'", "system-ui", "-apple-system", "sans-serif"],
+        // Serif cálida para la marca, saludos grandes y títulos de pantalla
+        // — nunca para cuerpo de texto ni botones (ver index.css).
+        brand: ["'Fraunces'", "Georgia", "serif"],
       },
       boxShadow: {
         glow: "0 10px 34px -10px hsl(var(--primary) / 0.5)",
         card: "0 4px 22px -8px hsl(220 60% 2% / 0.5)",
+        // Misma sombra base de las tarjetas, con un resplandor de color muy
+        // sutil agregado — usada solo por el componente Card.
+        cardGlow: "0 4px 22px -8px hsl(220 60% 2% / 0.5), 0 2px 16px -6px hsl(var(--primary) / 0.15)",
       },
       keyframes: {
         breathe: {

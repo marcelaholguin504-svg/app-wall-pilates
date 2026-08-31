@@ -50,7 +50,18 @@
     @apply font-sans text-foreground antialiased;
   }
 
-  h1,
+  /* Marca, saludos grandes y títulos de pantalla (todos son <h1> en la
+     app): serif cálida con carácter propio. Subtítulos de tarjeta (h2/h3)
+     se quedan en la fuente display normal — el contraste entre ambas es
+     lo que da la sensación premium, no reemplazar todo el texto. */
+  /* !important: cada pantalla ya trae la clase utilitaria `font-display`
+     en su <h1> (heredada de antes de agregar la fuente de marca), y las
+     utilidades de Tailwind viven en una capa CSS con más prioridad que
+     esta — sin !important, esa clase seguiría ganando en cada pantalla. */
+  h1 {
+    font-family: theme("fontFamily.brand") !important;
+  }
+
   h2,
   h3 {
     font-family: theme("fontFamily.display");

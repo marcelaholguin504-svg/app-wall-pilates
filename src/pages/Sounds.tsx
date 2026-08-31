@@ -5,6 +5,7 @@ import Screen from "@/components/Screen";
 import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { IconBadge } from "@/components/IconBadge";
+import { SoundOrb } from "@/components/SoundOrb";
 import { CloudRain, Waves, AudioLines, AudioWaveform, Radio, Fan, CarFront, Music2, Heart, Clock, BookOpen } from "lucide-react";
 import { SOUNDS, TIMER_OPTIONS } from "@/data/soundsData";
 import { articlesForProblem } from "@/data/educationalContent";
@@ -82,7 +83,7 @@ export default function Sounds() {
                   active ? "bg-primary/20 border-primary" : "bg-card border-border"
                 }`}
               >
-                <IconBadge icon={Icon} tone={active ? "primary" : "muted"} size="lg" className={active ? "animate-breathe" : ""} />
+                <SoundOrb icon={Icon} active={active} />
                 <span className="text-sm font-semibold text-center">{sound.label}</span>
                 {active && <span className="text-[10px] text-primary font-bold uppercase">Sonando</span>}
               </button>

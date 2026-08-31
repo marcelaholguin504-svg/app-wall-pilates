@@ -41,7 +41,19 @@ export function computeNextSleepWindow(
     startISO: new Date(startMs).toISOString(),
     endISO: new Date(endMs).toISOString(),
     isAdjusted: offsetMinutes !== 0,
+    anchorISO: anchor.timestamp,
   };
+}
+
+// Progreso 0–1 a través de todo el tiempo despierto esperado (desde el
+// último despertar/fin de siesta hasta el final de la ventana orientativa).
+// Es un indicador visual sutil, no una cuenta regresiva exacta.
+export function computeWindowProgress(window: SleepWindow, now: number = Date.now()): number {
+  const anchorMs = new Date(window.anchorISO).getTime();
+  const endMs = new Date(window.endISO).getTime();
+  if (endMs <= anchorMs) return 0;
+  const fraction = (now - anchorMs) / (endMs - anchorMs);
+  return Math.max(0, Math.min(1, fraction));
 }
 
 export const WINDOW_ADJUSTMENT_STEP = 15;
