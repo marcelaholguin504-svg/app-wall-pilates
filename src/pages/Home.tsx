@@ -125,9 +125,14 @@ export default function Home() {
               </div>
             </>
           ) : (
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              No tenemos suficientes registros todavía. Registra cuándo se despierta y empezaremos a mostrarte su próxima ventana orientativa.
-            </p>
+            <div className="flex items-start gap-3 py-1">
+              <IconBadge icon={Moon} tone="muted" />
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {state.events.length === 0
+                  ? "Aún no hay registros. En cuanto anotes cuándo se despertó, calcularemos aquí su próxima ventana orientativa."
+                  : "Ya tienes registros, pero necesitamos saber cuándo fue la última vez que se despertó para calcular su próxima ventana. Registra \"Se despertó\" la próxima vez que pase."}
+              </p>
+            </div>
           )}
         </Card>
 
