@@ -98,7 +98,7 @@ const StateContext = createContext<AppState | null>(null);
 const DispatchContext = createContext<((action: Action) => void) | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { membership, session } = useAuth();
+  const { membership, session, loading: authLoading } = useAuth();
   const [state, rawDispatch] = useReducer(reducer, initialState);
 
   const stateRef = useRef(state);
@@ -108,8 +108,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const accountId = membership?.status === "activo" ? membership.accountId : null;
 
-  // Hidrata (o limpia) el estado cuando cambia la cuenta activa.
+  // Hidrata (o limpia) el estado cuando cambia la cuenta activa. Mientras la
+  // autenticación todavía se está resolviendo (authLoading), NO tocamos el
+  // estado: membership empieza en null antes de resolverse, y si limpiáramos
+  // aquí (ready=true, child=null) justo en ese instante, RequireProfile
+  // (que ya lee ese estado) redirigía a /onboarding un instante antes de que
+  // la hidratación real terminara — perdiendo a una usuaria con perfil
+  // completo en la pantalla de onboarding sin motivo.
   useEffect(() => {
+    if (authLoading) return;
+
     let cancelled = false;
 
     if (!accountId) {
@@ -135,7 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [accountId]);
+  }, [accountId, authLoading]);
 
   function dispatch(action: Action) {
     const email = session?.user?.email || null;
