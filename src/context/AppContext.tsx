@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from "react";
 import type { ChildProfile, PlanAction, SleepEvent, SleepEventType, SleepPlan } from "@/types";
-import { generateId } from "@/utils/id";
+import { generateId, generateUUID } from "@/utils/id";
 import { trackEvent } from "@/services/events";
 import { DEFAULT_PLAN_TEMPLATE } from "@/data/planTemplates";
 import { useAuth } from "@/hooks/useAuth";
@@ -152,7 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       case "CREATE_PROFILE": {
         if (!accountId) return;
         const child: ChildProfile = {
-          id: generateId("child"),
+          id: generateUUID(),
           accountId,
           createdAt: new Date().toISOString(),
           ...action.child,
@@ -184,7 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       case "ADD_EVENT": {
         if (!accountId) return;
         const event: SleepEvent = {
-          id: generateId("event"),
+          id: generateUUID(),
           accountId,
           type: action.eventType,
           timestamp: action.timestamp || new Date().toISOString(),
