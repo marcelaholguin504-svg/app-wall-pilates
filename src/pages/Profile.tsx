@@ -453,6 +453,7 @@ export default function Profile() {
           </div>
         </DialogContent>
       </Dialog>
+      <p className="text-center text-[10px] text-muted-foreground/50 pb-2">v{__APP_COMMIT_HASH__}</p>
 
       <BottomNav />
     </Screen>
