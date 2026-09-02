@@ -81,7 +81,7 @@ export interface SleepWindow {
   label: string;
   startISO: string;
   endISO: string;
-  isAdjusted: boolean;
+  isAdjusted: boolean;   isEstimated: boolean;
   // Momento del último despertar/fin de siesta usado como ancla del
   // cálculo — permite mostrar un progreso visual sutil (ver
   // computeWindowProgress), nunca un cronómetro exacto.

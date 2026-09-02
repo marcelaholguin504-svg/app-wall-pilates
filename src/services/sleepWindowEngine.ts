@@ -27,21 +27,22 @@ export function computeNextSleepWindow(
   events: SleepEvent[],
   offsetMinutes: number
 ): SleepWindow | null {
-  const anchor = lastWakeOrNapEnd(events);
-  if (!anchor) return null;
+  const realAnchor = lastWakeOrNapEnd(events);
+  const isEstimated = !realAnchor;
+  const anchorTime = realAnchor ? new Date(realAnchor.timestamp).getTime() : Date.now();
 
   const [minAwake, maxAwake] = AWAKE_WINDOW_MINUTES[ageStage];
-  const anchorTime = new Date(anchor.timestamp).getTime();
 
   const startMs = anchorTime + (minAwake + offsetMinutes) * 60000;
   const endMs = anchorTime + (maxAwake + offsetMinutes) * 60000;
 
   return {
-    label: "Próxima ventana orientativa",
+    label: isEstimated ? "Estimado según su edad" : "Próxima ventana orientativa",
     startISO: new Date(startMs).toISOString(),
     endISO: new Date(endMs).toISOString(),
     isAdjusted: offsetMinutes !== 0,
-    anchorISO: anchor.timestamp,
+    isEstimated,
+    anchorISO: new Date(anchorTime).toISOString(),
   };
 }
 
