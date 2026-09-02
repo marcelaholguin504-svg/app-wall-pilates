@@ -73,7 +73,7 @@ function toRow(accountId: string, child: ChildProfile) {
 }
 
 export async function upsertChildProfile(accountId: string, child: ChildProfile): Promise<void> {
-  const { error } = await supabase.from("child_profiles").upsert(toRow(accountId, child), { onConflict: "id" });
+  const { error } = await supabase.from("child_profiles").upsert(toRow(accountId, child), { onConflict: "account_id" });
   if (error) {
     // eslint-disable-next-line no-console
     console.error("upsertChildProfile", error);
