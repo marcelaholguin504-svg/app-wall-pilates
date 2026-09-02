@@ -112,7 +112,7 @@ export default function Home() {
                   <p className="font-display text-2xl font-extrabold mb-1">
                     {formatTime(window_.startISO)} – {formatTime(window_.endISO)}
                   </p>
-                  <p className="text-muted-foreground text-xs">Observa también sus señales de sueño.</p>
+                 <p className="text-muted-foreground text-xs">{window_.isEstimated ? "Estimado según su edad — aún no hay registros hoy." : "Observa también sus señales de sueño."}</p>
                 </div>
               </div>
               <div className="flex gap-2.5">
