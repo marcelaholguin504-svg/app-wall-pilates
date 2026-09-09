@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import Caregivers from "@/pages/Caregivers";
 import Library from "@/pages/Library";
 import SleepTips from "@/pages/SleepTips";
+import Quiz from "@/pages/Quiz";
 
 function LoadingScreen() {
   return (
@@ -91,6 +92,10 @@ export default function App() {
 
         {/* Pública a propósito: se enlaza desde /entrar, antes de iniciar sesión. */}
         <Route path="/privacidad" element={<Privacy />} />
+
+        {/* Pública a propósito: funnel de anuncios separado del onboarding,
+            no requiere sesión ni compra — así puede recibir tráfico frío. */}
+        <Route path="/quiz" element={<Quiz />} />
 
         <Route
           path="/onboarding"
