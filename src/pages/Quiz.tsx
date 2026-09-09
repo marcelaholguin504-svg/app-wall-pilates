@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
-import { Moon } from "lucide-react";
+import { Moon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChoiceCard } from "@/components/ChoiceCard";
 import { IconBadge } from "@/components/IconBadge";
 import ProgressDots from "@/components/ProgressDots";
+import {
+  AwakeWindowsIllustration,
+  SingleStepPathIllustration,
+  WarmCommunityIllustration,
+} from "@/components/QuizLearningGraphics";
 import { initMetaPixel, trackQuizEvent } from "@/services/metaPixel";
+import { GUIDANCE_BANK } from "@/data/guidanceContent";
+import { SAFETY_ALERT_MESSAGE, FEVER_ALERT_UNDER_3_MONTHS, feverAlertOver3Months } from "@/data/safetyContent";
 import {
   P1_EDAD,
   P2_PATRON,
@@ -18,16 +27,32 @@ import {
   P8_CUIDADORES,
   P9_META,
   INITIAL_QUIZ_ANSWERS,
-  answersSummary,
+  labelFor,
+  LEARNING_BLOCKS,
+  BENEFITS,
+  URGENCY_BENEFITS_REMINDER,
+  PERTENENCIA_QUOTE_URGENCIA,
+  GUARANTEE_TEXT,
+  CHECKOUT_URL,
+  segmentForEdad,
+  ageGroupForEdad,
+  helpSituationForSituacionAhora,
+  mirrorEstadoEmocional,
+  validationQueIntento,
+  closeForMeta,
+  cuidadorClause,
   type QuizAnswers,
   type QuizOption,
+  type LearningBlock,
 } from "@/data/quizContent";
 
 // Quiz de validación (/quiz): funnel de anuncios independiente del
-// onboarding de la app. Fase A: solo la Primera Pantalla, el nombre y las
-// 9 preguntas — sin bloques de aprendizaje, resultado, oferta ni
-// exit-intent (eso llega en fases siguientes). Las respuestas viven solo
-// en el estado de este componente; todavía no se guardan en Supabase.
+// onboarding de la app. Fase A: Primera Pantalla, nombre y las 9
+// preguntas (ya en producción, sin tocar). Fase B: 3 bloques de
+// aprendizaje intercalados, página de resultado (o derivación a pediatra
+// si aplica la rama de seguridad), beneficios, y cierre con oferta. Las
+// respuestas viven solo en el estado de este componente; todavía no se
+// guardan en Supabase.
 
 interface QuestionStep {
   title: (displayName: string) => string;
@@ -93,11 +118,37 @@ const QUESTIONS: QuestionStep[] = [
   },
 ];
 
-// Pasos: 0 = validación, 1 = nombre, 2..10 = P1..P9, 11 = resumen (fin de Fase A).
-const STEP_NAME = 1;
-const STEP_FIRST_QUESTION = 2;
-const STEP_SUMMARY = STEP_FIRST_QUESTION + QUESTIONS.length;
-const TOTAL_DOTS = 1 + QUESTIONS.length; // nombre + 9 preguntas
+type FlowStep =
+  | { kind: "hero" }
+  | { kind: "name"; dotIndex: number }
+  | { kind: "question"; question: QuestionStep; dotIndex: number }
+  | { kind: "learning"; block: LearningBlock }
+  | { kind: "result" }
+  | { kind: "benefits" }
+  | { kind: "urgency" };
+
+// Orden exacto pedido: Bloque 1 después de P2 (antes de P3), Bloque 2
+// después de P4 (antes de P5), Bloque 3 después de P5 (antes de P6).
+const FLOW: FlowStep[] = [
+  { kind: "hero" },
+  { kind: "name", dotIndex: 0 },
+  { kind: "question", question: QUESTIONS[0], dotIndex: 1 }, // P1
+  { kind: "question", question: QUESTIONS[1], dotIndex: 2 }, // P2
+  { kind: "learning", block: LEARNING_BLOCKS[0] },
+  { kind: "question", question: QUESTIONS[2], dotIndex: 3 }, // P3
+  { kind: "question", question: QUESTIONS[3], dotIndex: 4 }, // P4
+  { kind: "learning", block: LEARNING_BLOCKS[1] },
+  { kind: "question", question: QUESTIONS[4], dotIndex: 5 }, // P5
+  { kind: "learning", block: LEARNING_BLOCKS[2] },
+  { kind: "question", question: QUESTIONS[5], dotIndex: 6 }, // P6
+  { kind: "question", question: QUESTIONS[6], dotIndex: 7 }, // P7
+  { kind: "question", question: QUESTIONS[7], dotIndex: 8 }, // P8
+  { kind: "question", question: QUESTIONS[8], dotIndex: 9 }, // P9
+  { kind: "result" },
+  { kind: "benefits" },
+  { kind: "urgency" },
+];
+const TOTAL_DOTS = 10; // nombre + 9 preguntas
 
 const SELECT_ADVANCE_DELAY_MS = 220;
 
@@ -107,6 +158,10 @@ export default function Quiz() {
   const [nameInput, setNameInput] = useState("");
   const [flashId, setFlashId] = useState<string | null>(null);
 
+  const displayName = answers.name || "tu bebé";
+  const blocked = answers.alertaSeguridad !== "solo_sueno";
+  const current = FLOW[step];
+
   useEffect(() => {
     initMetaPixel();
     trackQuizEvent("quiz_paso_0_validacion");
@@ -114,9 +169,13 @@ export default function Quiz() {
 
   useEffect(() => {
     setFlashId(null);
+    const item = FLOW[step];
+    if (item.kind === "learning") trackQuizEvent(`quiz_bloque_aprendizaje_${item.block.n}`);
+    else if (item.kind === "result") trackQuizEvent(blocked ? "quiz_derivado_pediatra" : "quiz_resultado_visto");
+    else if (item.kind === "benefits") trackQuizEvent("quiz_beneficios_visto");
+    else if (item.kind === "urgency") trackQuizEvent("quiz_urgencia_visto");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-
-  const displayName = answers.name || "tu bebé";
 
   function goBack() {
     if (step > 0) setStep(step - 1);
@@ -126,7 +185,7 @@ export default function Quiz() {
     const trimmed = rawName.trim();
     setAnswers((a) => ({ ...a, name: trimmed || null }));
     trackQuizEvent("quiz_paso_0.5_nombre");
-    setStep(STEP_FIRST_QUESTION);
+    setStep((s) => s + 1);
   }
 
   function selectAnswer(question: QuestionStep, option: QuizOption) {
@@ -140,7 +199,7 @@ export default function Quiz() {
   }
 
   // Paso 0 — Primera Pantalla (validación).
-  if (step === 0) {
+  if (current.kind === "hero") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
         <p className="font-display text-2xl sm:text-3xl font-extrabold leading-snug mb-5">
@@ -150,7 +209,7 @@ export default function Quiz() {
         <p className="text-muted-foreground text-base leading-relaxed mb-10 max-w-[320px]">
           Es que nadie te dio una guía clara para <span className="text-foreground font-bold">ESTE momento</span>.
         </p>
-        <Button size="lg" onClick={() => setStep(STEP_NAME)}>
+        <Button size="lg" onClick={() => setStep(1)}>
           Dime qué hacer ahora →
         </Button>
         <p className="text-xs text-muted-foreground mt-4">(30 segundos. Sin registros. Sin apps que instalar todavía.)</p>
@@ -159,10 +218,10 @@ export default function Quiz() {
   }
 
   // Paso 0.5 — nombre.
-  if (step === STEP_NAME) {
+  if (current.kind === "name") {
     return (
       <div className="min-h-screen flex flex-col px-6 pt-8 pb-10">
-        <ProgressDots total={TOTAL_DOTS} current={0} />
+        <ProgressDots total={TOTAL_DOTS} current={current.dotIndex} />
         <div className="flex-1 mt-8">
           <h1 className="font-display text-2xl font-extrabold mb-6 flex items-center gap-2">
             ¿Cómo se llama tu bebé? <IconBadge icon={Moon} size="sm" />
@@ -190,12 +249,11 @@ export default function Quiz() {
   }
 
   // P1..P9.
-  if (step >= STEP_FIRST_QUESTION && step < STEP_SUMMARY) {
-    const questionIndex = step - STEP_FIRST_QUESTION;
-    const question = QUESTIONS[questionIndex];
+  if (current.kind === "question") {
+    const { question } = current;
     return (
       <div className="min-h-screen flex flex-col px-6 pt-8 pb-10">
-        <ProgressDots total={TOTAL_DOTS} current={questionIndex + 1} />
+        <ProgressDots total={TOTAL_DOTS} current={current.dotIndex} />
         <div className="flex-1 mt-8">
           <h1 className="font-display text-2xl font-extrabold mb-6 leading-snug">{question.title(displayName)}</h1>
           <div className="flex flex-col gap-2.5">
@@ -217,25 +275,151 @@ export default function Quiz() {
     );
   }
 
-  // Paso final de la Fase A: resumen temporal, no es la página de resultado
-  // (eso llega en la Fase B). Sirve para confirmar visualmente en QA que
-  // las 9 respuestas quedaron bien capturadas.
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
-      <IconBadge icon={Moon} size="lg" className="mb-4" />
-      <h1 className="font-display text-2xl font-extrabold mb-2">Fase A completa</h1>
-      <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px] mb-6">
-        Aquí seguirán los bloques de aprendizaje y tu resultado personalizado para {displayName} — todavía no
-        construidos. Esto es solo un resumen temporal para confirmar que las respuestas se guardaron bien.
-      </p>
-      <div className="w-full text-left flex flex-col gap-2">
-        {answersSummary(answers).map((row) => (
-          <div key={row.question} className="bg-card border border-border rounded-xl px-4 py-2.5">
-            <p className="text-xs font-semibold text-muted-foreground">{row.question}</p>
-            <p className="text-sm font-semibold">{row.value}</p>
-          </div>
-        ))}
+  // Bloques de aprendizaje 1, 2 y 3 — pantallas sin pregunta.
+  if (current.kind === "learning") {
+    const { block } = current;
+    return (
+      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+        <div className="flex-1 flex flex-col items-center text-center">
+          <IconBadge icon={Moon} tone="accent" size="lg" className="mb-5" />
+          <p className="text-xs font-bold uppercase tracking-wide text-primary mb-2">{block.eyebrow}</p>
+          <h1 className="font-display text-2xl font-extrabold mb-4 leading-snug">{block.title}</h1>
+          <Card className="w-full mb-5">
+            {block.n === 1 && <AwakeWindowsIllustration />}
+            {block.n === 2 && <SingleStepPathIllustration />}
+            {block.n === 3 && <WarmCommunityIllustration />}
+          </Card>
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-[320px]">{block.text}</p>
+        </div>
+        <Button size="lg" onClick={() => setStep((s) => s + 1)} className="mt-6">
+          Continuar
+        </Button>
       </div>
+    );
+  }
+
+  // Página de resultado — rama de seguridad o resultado personalizado.
+  if (current.kind === "result") {
+    if (blocked) {
+      const isFever = answers.alertaSeguridad === "fiebre";
+      const content = isFever
+        ? answers.edad === "0-3m"
+          ? FEVER_ALERT_UNDER_3_MONTHS
+          : feverAlertOver3Months(displayName)
+        : SAFETY_ALERT_MESSAGE;
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
+          <IconBadge icon={Moon} tone="destructive" size="lg" className="mb-5" />
+          <h1 className="font-display text-xl font-extrabold mb-3 text-destructive">{content.title}</h1>
+          <p className="text-foreground/80 text-sm leading-relaxed max-w-[320px] mb-2">{content.body}</p>
+          <p className="text-muted-foreground text-xs mt-6">Puedes cerrar esta pestaña cuando quieras.</p>
+        </div>
+      );
+    }
+
+    const segment = segmentForEdad(answers.edad);
+    const ageGroup = ageGroupForEdad(answers.edad);
+    const situationLike = helpSituationForSituacionAhora(answers.situacionAhora);
+    const concreteAction = GUIDANCE_BANK[situationLike][ageGroup].steps[0];
+    const patronLabel = labelFor(P2_PATRON, answers.patron).toLowerCase();
+    const clause = cuidadorClause(answers.cuidadores);
+
+    return (
+      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+        <h1 className="font-display text-2xl font-extrabold mb-2 leading-snug">
+          Esto que vive {displayName} es normal para su edad.
+        </h1>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-6">{segment.diagnosticoBase}</p>
+
+        <Card className="mb-4">
+          <p className="text-sm leading-relaxed">{mirrorEstadoEmocional(answers.estadoEmocional)}</p>
+        </Card>
+
+        <Card className="mb-4">
+          <p className="text-sm leading-relaxed">{validationQueIntento(answers.queIntento, displayName)}</p>
+        </Card>
+
+        <Badge className="mb-3 self-start">Una acción concreta para probar hoy</Badge>
+        <Card className="mb-4">
+          <p className="text-xs text-muted-foreground mb-2">
+            Para lo que más se repite — "{patronLabel}" — a la edad de {displayName}:
+          </p>
+          <p className="text-sm font-semibold leading-relaxed">{concreteAction}</p>
+        </Card>
+
+        {clause && (
+          <Card className="mb-4 border-primary/30 bg-primary/10">
+            <p className="text-sm leading-relaxed">
+              Como {clause} también cuida a {displayName}, esto se puede compartir para que ambas sigan la misma
+              guía.
+            </p>
+          </Card>
+        )}
+
+        <p className="text-sm leading-relaxed font-semibold mb-8">{closeForMeta(answers.meta)}</p>
+
+        <Button size="lg" onClick={() => setStep((s) => s + 1)}>
+          Continuar
+        </Button>
+      </div>
+    );
+  }
+
+  // Bloque de beneficios (solo rama normal — nunca se llega aquí si blocked).
+  if (current.kind === "benefits") {
+    return (
+      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+        <div className="flex-1">
+          <h1 className="font-display text-2xl font-extrabold mb-6 leading-snug">
+            Esto es lo que vas a tener a partir de hoy
+          </h1>
+          <ul className="flex flex-col gap-3">
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-start gap-3">
+                <IconBadge icon={Check} tone="success" size="sm" className="mt-0.5" />
+                <span className="text-sm leading-relaxed">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Button size="lg" onClick={() => setStep((s) => s + 1)} className="mt-8">
+          Continuar
+        </Button>
+      </div>
+    );
+  }
+
+  // Bloque de urgencia + cierre + botón de compra.
+  return (
+    <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+      <ul className="flex flex-col gap-2.5 mb-6">
+        {URGENCY_BENEFITS_REMINDER.map((b) => (
+          <li key={b} className="flex items-start gap-2.5">
+            <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+            <span className="text-sm leading-relaxed">{b}</span>
+          </li>
+        ))}
+      </ul>
+
+      <Card className="mb-6 bg-muted/60">
+        <p className="text-sm leading-relaxed text-foreground/90">{PERTENENCIA_QUOTE_URGENCIA}</p>
+      </Card>
+
+      <h2 className="font-display text-xl font-extrabold mb-2 leading-snug">
+        Esta etapa no dura para siempre — y eso es justo el punto
+      </h2>
+      <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+        {displayName} va a cambiar de etapa pronto, con o sin guía. La diferencia no es si esta etapa va a pasar —
+        va a pasar de todas formas. La diferencia es si la atraviesan con claridad, o adivinando cada noche.
+      </p>
+
+      <p className="text-xs text-muted-foreground text-center mb-6">{GUARANTEE_TEXT}</p>
+
+      <Button asChild size="lg" className="animate-breathe">
+        <a href={CHECKOUT_URL} onClick={() => trackQuizEvent("quiz_oferta_click")}>
+          Quiero saber qué hacer ahora →
+        </a>
+      </Button>
     </div>
   );
 }
