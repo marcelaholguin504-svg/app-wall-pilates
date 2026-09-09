@@ -19,6 +19,16 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+// Content ocupa toda la pantalla solo para centrar con flexbox — la
+// tarjeta visible es el div interior. Antes, la tarjeta se centraba con
+// `left-1/2 -translate-x-1/2 -translate-y-1/2` directamente sobre el
+// mismo elemento que además llevaba `animate-fadeUp`: como la animación
+// también define su propio `transform` (translateY), al terminar
+// pisaba por completo el transform de centrado — la tarjeta quedaba
+// pegada al borde izquierdo con `left: 50%` pero sin el -50% que la
+// centraba, cortada fuera de pantalla en móvil. Separar el centrado
+// (flexbox, sin transform) de la animación (transform, en el hijo) evita
+// que se pisen entre sí.
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -27,13 +37,12 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(
-        "fixed left-1/2 top-1/2 z-[210] w-[calc(100%-2rem)] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-card animate-fadeUp",
-        className
-      )}
+      className="fixed inset-0 z-[210] flex items-center justify-center p-4"
       {...props}
     >
-      {children}
+      <div className={cn("relative w-full max-w-[400px] rounded-2xl border border-border bg-card p-6 shadow-card animate-fadeUp", className)}>
+        {children}
+      </div>
     </DialogPrimitive.Content>
   </DialogPortal>
 ));

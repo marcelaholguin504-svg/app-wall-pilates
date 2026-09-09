@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Moon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,9 @@ import {
   SingleStepPathIllustration,
   WarmCommunityIllustration,
 } from "@/components/QuizLearningGraphics";
+import { QuizUrgencyIllustration } from "@/components/QuizUrgencyIllustration";
+import { QuizFloatingButton } from "@/components/QuizFloatingButton";
+import { QuizExitIntentDialog } from "@/components/QuizExitIntentDialog";
 import { initMetaPixel, trackQuizEvent } from "@/services/metaPixel";
 import { GUIDANCE_BANK } from "@/data/guidanceContent";
 import { SAFETY_ALERT_MESSAGE, FEVER_ALERT_UNDER_3_MONTHS, feverAlertOver3Months } from "@/data/safetyContent";
@@ -48,11 +51,11 @@ import {
 
 // Quiz de validación (/quiz): funnel de anuncios independiente del
 // onboarding de la app. Fase A: Primera Pantalla, nombre y las 9
-// preguntas (ya en producción, sin tocar). Fase B: 3 bloques de
-// aprendizaje intercalados, página de resultado (o derivación a pediatra
-// si aplica la rama de seguridad), beneficios, y cierre con oferta. Las
-// respuestas viven solo en el estado de este componente; todavía no se
-// guardan en Supabase.
+// preguntas. Fase B: 3 bloques de aprendizaje, resultado (o derivación a
+// pediatra), beneficios y cierre con oferta. Fase C (esta): botón
+// flotante, exit-intent e ilustración del cierre. Ninguna fase anterior
+// se modificó — solo se agregó lo nuevo encima. Las respuestas viven solo
+// en el estado de este componente; todavía no se guardan en Supabase.
 
 interface QuestionStep {
   title: (displayName: string) => string;
@@ -150,6 +153,12 @@ const FLOW: FlowStep[] = [
 ];
 const TOTAL_DOTS = 10; // nombre + 9 preguntas
 
+const NAME_INDEX = FLOW.findIndex((s) => s.kind === "name");
+const LEARNING1_INDEX = FLOW.findIndex((s) => s.kind === "learning");
+const P7_INDEX = FLOW.findIndex((s) => s.kind === "question" && s.question.field === "alertaSeguridad");
+const RESULT_INDEX = FLOW.findIndex((s) => s.kind === "result");
+const URGENCY_INDEX = FLOW.findIndex((s) => s.kind === "urgency");
+
 const SELECT_ADVANCE_DELAY_MS = 220;
 
 export default function Quiz() {
@@ -157,6 +166,8 @@ export default function Quiz() {
   const [answers, setAnswers] = useState<QuizAnswers>(INITIAL_QUIZ_ANSWERS);
   const [nameInput, setNameInput] = useState("");
   const [flashId, setFlashId] = useState<string | null>(null);
+  const [exitIntentOpen, setExitIntentOpen] = useState(false);
+  const [exitIntentShown, setExitIntentShown] = useState(false);
 
   const displayName = answers.name || "tu bebé";
   const blocked = answers.alertaSeguridad !== "solo_sueno";
@@ -176,6 +187,27 @@ export default function Quiz() {
     else if (item.kind === "urgency") trackQuizEvent("quiz_urgencia_visto");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
+
+  // Exit-intent: armado solo después de haber dado (o saltado) el nombre y
+  // mientras no se haya mostrado ya una vez — nunca insiste dos veces.
+  // Excepción propia (no pedida explícitamente, pero coherente con la regla
+  // de "nunca un botón de compra junto a la derivación a pediatra"): se
+  // desarma también en la pantalla de resultado cuando aplicó la rama de
+  // seguridad, para no invitar a "ver la oferta" ahí.
+  const exitIntentArmed = step > NAME_INDEX && !(current.kind === "result" && blocked);
+
+  useEffect(() => {
+    if (!exitIntentArmed || exitIntentShown) return;
+    function handleMouseOut(e: MouseEvent) {
+      if (e.clientY <= 0 && !e.relatedTarget) {
+        setExitIntentShown(true);
+        setExitIntentOpen(true);
+        trackQuizEvent("quiz_exit_intent_mostrado");
+      }
+    }
+    document.addEventListener("mouseout", handleMouseOut);
+    return () => document.removeEventListener("mouseout", handleMouseOut);
+  }, [exitIntentArmed, exitIntentShown]);
 
   function goBack() {
     if (step > 0) setStep(step - 1);
@@ -198,9 +230,39 @@ export default function Quiz() {
     }, SELECT_ADVANCE_DELAY_MS);
   }
 
+  // Botón flotante: nunca debe llevar a la oferta sin pasar antes por la
+  // pregunta de seguridad (P7) — si todavía no se respondió, salta ahí
+  // primero en vez de saltar directo a la compra. Si ya se respondió con
+  // una bandera de riesgo, no hace nada (nunca ofrece comprar en ese caso).
+  function jumpToOffer() {
+    trackQuizEvent("quiz_boton_flotante_click");
+    if (answers.alertaSeguridad === "solo_sueno") {
+      setStep(URGENCY_INDEX);
+    } else if (answers.alertaSeguridad === null) {
+      setStep(P7_INDEX);
+    }
+  }
+
+  function handleSaveEmail(email: string) {
+    trackQuizEvent("quiz_exit_intent_email", { has_email: Boolean(email) });
+  }
+
+  // Una vez que P7 se respondió con una bandera de riesgo, el botón flotante
+  // deja de mostrarse en cualquier pantalla posterior (no solo en el
+  // resultado) — nunca debe quedar un botón "Ver mi plan" que, al tocarlo,
+  // no haga nada porque no hay ninguna oferta segura que ofrecer.
+  const p7BlockedAnswered = answers.alertaSeguridad !== null && answers.alertaSeguridad !== "solo_sueno";
+  // Tampoco se muestra ya en Urgencia: ahí sería redundante, apilado justo
+  // encima del botón real de compra que hace exactamente lo mismo.
+  const floatingButtonVisible =
+    step >= LEARNING1_INDEX && step !== P7_INDEX && !p7BlockedAnswered && current.kind !== "urgency";
+  const bottomPad = floatingButtonVisible ? "pb-28" : "pb-10";
+
+  let content: ReactNode;
+
   // Paso 0 — Primera Pantalla (validación).
   if (current.kind === "hero") {
-    return (
+    content = (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
         <p className="font-display text-2xl sm:text-3xl font-extrabold leading-snug mb-5">
           Son las 2:47 AM y tu bebé sigue sin dormir.
@@ -215,11 +277,9 @@ export default function Quiz() {
         <p className="text-xs text-muted-foreground mt-4">(30 segundos. Sin registros. Sin apps que instalar todavía.)</p>
       </div>
     );
-  }
-
-  // Paso 0.5 — nombre.
-  if (current.kind === "name") {
-    return (
+  } else if (current.kind === "name") {
+    // Paso 0.5 — nombre.
+    content = (
       <div className="min-h-screen flex flex-col px-6 pt-8 pb-10">
         <ProgressDots total={TOTAL_DOTS} current={current.dotIndex} />
         <div className="flex-1 mt-8">
@@ -246,13 +306,11 @@ export default function Quiz() {
         </div>
       </div>
     );
-  }
-
-  // P1..P9.
-  if (current.kind === "question") {
+  } else if (current.kind === "question") {
+    // P1..P9.
     const { question } = current;
-    return (
-      <div className="min-h-screen flex flex-col px-6 pt-8 pb-10">
+    content = (
+      <div className={`min-h-screen flex flex-col px-6 pt-8 ${bottomPad}`}>
         <ProgressDots total={TOTAL_DOTS} current={current.dotIndex} />
         <div className="flex-1 mt-8">
           <h1 className="font-display text-2xl font-extrabold mb-6 leading-snug">{question.title(displayName)}</h1>
@@ -273,13 +331,11 @@ export default function Quiz() {
         </Button>
       </div>
     );
-  }
-
-  // Bloques de aprendizaje 1, 2 y 3 — pantallas sin pregunta.
-  if (current.kind === "learning") {
+  } else if (current.kind === "learning") {
+    // Bloques de aprendizaje 1, 2 y 3 — pantallas sin pregunta.
     const { block } = current;
-    return (
-      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+    content = (
+      <div className={`min-h-screen flex flex-col px-6 pt-10 ${bottomPad}`}>
         <div className="flex-1 flex flex-col items-center text-center">
           <IconBadge icon={Moon} tone="accent" size="lg" className="mb-5" />
           <p className="text-xs font-bold uppercase tracking-wide text-primary mb-2">{block.eyebrow}</p>
@@ -296,79 +352,75 @@ export default function Quiz() {
         </Button>
       </div>
     );
-  }
-
-  // Página de resultado — rama de seguridad o resultado personalizado.
-  if (current.kind === "result") {
+  } else if (current.kind === "result") {
+    // Página de resultado — rama de seguridad o resultado personalizado.
     if (blocked) {
       const isFever = answers.alertaSeguridad === "fiebre";
-      const content = isFever
+      const alertContent = isFever
         ? answers.edad === "0-3m"
           ? FEVER_ALERT_UNDER_3_MONTHS
           : feverAlertOver3Months(displayName)
         : SAFETY_ALERT_MESSAGE;
-      return (
+      content = (
         <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
           <IconBadge icon={Moon} tone="destructive" size="lg" className="mb-5" />
-          <h1 className="font-display text-xl font-extrabold mb-3 text-destructive">{content.title}</h1>
-          <p className="text-foreground/80 text-sm leading-relaxed max-w-[320px] mb-2">{content.body}</p>
+          <h1 className="font-display text-xl font-extrabold mb-3 text-destructive">{alertContent.title}</h1>
+          <p className="text-foreground/80 text-sm leading-relaxed max-w-[320px] mb-2">{alertContent.body}</p>
           <p className="text-muted-foreground text-xs mt-6">Puedes cerrar esta pestaña cuando quieras.</p>
         </div>
       );
-    }
+    } else {
+      const segment = segmentForEdad(answers.edad);
+      const ageGroup = ageGroupForEdad(answers.edad);
+      const situationLike = helpSituationForSituacionAhora(answers.situacionAhora);
+      const concreteAction = GUIDANCE_BANK[situationLike][ageGroup].steps[0];
+      const patronLabel = labelFor(P2_PATRON, answers.patron).toLowerCase();
+      const clause = cuidadorClause(answers.cuidadores);
 
-    const segment = segmentForEdad(answers.edad);
-    const ageGroup = ageGroupForEdad(answers.edad);
-    const situationLike = helpSituationForSituacionAhora(answers.situacionAhora);
-    const concreteAction = GUIDANCE_BANK[situationLike][ageGroup].steps[0];
-    const patronLabel = labelFor(P2_PATRON, answers.patron).toLowerCase();
-    const clause = cuidadorClause(answers.cuidadores);
+      content = (
+        <div className={`min-h-screen flex flex-col px-6 pt-10 ${bottomPad}`}>
+          <h1 className="font-display text-2xl font-extrabold mb-2 leading-snug">
+            Esto que vive {displayName} es normal para su edad.
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">{segment.diagnosticoBase}</p>
 
-    return (
-      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
-        <h1 className="font-display text-2xl font-extrabold mb-2 leading-snug">
-          Esto que vive {displayName} es normal para su edad.
-        </h1>
-        <p className="text-muted-foreground text-sm leading-relaxed mb-6">{segment.diagnosticoBase}</p>
-
-        <Card className="mb-4">
-          <p className="text-sm leading-relaxed">{mirrorEstadoEmocional(answers.estadoEmocional)}</p>
-        </Card>
-
-        <Card className="mb-4">
-          <p className="text-sm leading-relaxed">{validationQueIntento(answers.queIntento, displayName)}</p>
-        </Card>
-
-        <Badge className="mb-3 self-start">Una acción concreta para probar hoy</Badge>
-        <Card className="mb-4">
-          <p className="text-xs text-muted-foreground mb-2">
-            Para lo que más se repite — "{patronLabel}" — a la edad de {displayName}:
-          </p>
-          <p className="text-sm font-semibold leading-relaxed">{concreteAction}</p>
-        </Card>
-
-        {clause && (
-          <Card className="mb-4 border-primary/30 bg-primary/10">
-            <p className="text-sm leading-relaxed">
-              Como {clause} también cuida a {displayName}, esto se puede compartir para que ambas sigan la misma
-              guía.
-            </p>
+          <Card className="mb-4">
+            <p className="text-sm leading-relaxed">{mirrorEstadoEmocional(answers.estadoEmocional)}</p>
           </Card>
-        )}
 
-        <p className="text-sm leading-relaxed font-semibold mb-8">{closeForMeta(answers.meta)}</p>
+          <Card className="mb-4">
+            <p className="text-sm leading-relaxed">{validationQueIntento(answers.queIntento, displayName)}</p>
+          </Card>
 
-        <Button size="lg" onClick={() => setStep((s) => s + 1)}>
-          Continuar
-        </Button>
-      </div>
-    );
-  }
+          <Badge className="mb-3 self-start">Una acción concreta para probar hoy</Badge>
+          <Card className="mb-4">
+            <p className="text-xs text-muted-foreground mb-2">
+              Para lo que más se repite — "{patronLabel}" — a la edad de {displayName}:
+            </p>
+            <p className="text-sm font-semibold leading-relaxed">{concreteAction}</p>
+          </Card>
 
-  // Bloque de beneficios (solo rama normal — nunca se llega aquí si blocked).
-  if (current.kind === "benefits") {
-    return (
-      <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
+          {clause && (
+            <Card className="mb-4 border-primary/30 bg-primary/10">
+              <p className="text-sm leading-relaxed">
+                Como {clause} también cuida a {displayName}, esto se puede compartir para que ambas sigan la misma
+                guía.
+              </p>
+            </Card>
+          )}
+
+          <p className="text-sm leading-relaxed font-semibold mb-8">{closeForMeta(answers.meta)}</p>
+
+          <Button size="lg" onClick={() => setStep((s) => s + 1)}>
+            Continuar
+          </Button>
+        </div>
+      );
+    }
+  } else if (current.kind === "benefits") {
+    // Bloque de beneficios (solo rama normal — nunca se llega aquí si blocked).
+    content = (
+      <div className={`min-h-screen flex flex-col px-6 pt-10 ${bottomPad}`}>
         <div className="flex-1">
           <h1 className="font-display text-2xl font-extrabold mb-6 leading-snug">
             Esto es lo que vas a tener a partir de hoy
@@ -387,39 +439,58 @@ export default function Quiz() {
         </Button>
       </div>
     );
+  } else {
+    // Bloque de urgencia + cierre + botón de compra.
+    content = (
+      <div className={`min-h-screen flex flex-col px-6 pt-10 ${bottomPad}`}>
+        <div className="mb-6">
+          <QuizUrgencyIllustration />
+        </div>
+
+        <ul className="flex flex-col gap-2.5 mb-6">
+          {URGENCY_BENEFITS_REMINDER.map((b) => (
+            <li key={b} className="flex items-start gap-2.5">
+              <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+              <span className="text-sm leading-relaxed">{b}</span>
+            </li>
+          ))}
+        </ul>
+
+        <Card className="mb-6 bg-muted/60">
+          <p className="text-sm leading-relaxed text-foreground/90">{PERTENENCIA_QUOTE_URGENCIA}</p>
+        </Card>
+
+        <h2 className="font-display text-xl font-extrabold mb-2 leading-snug">
+          Esta etapa no dura para siempre — y eso es justo el punto
+        </h2>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+          {displayName} va a cambiar de etapa pronto, con o sin guía. La diferencia no es si esta etapa va a pasar —
+          va a pasar de todas formas. La diferencia es si la atraviesan con claridad, o adivinando cada noche.
+        </p>
+
+        <p className="text-xs text-muted-foreground text-center mb-6">{GUARANTEE_TEXT}</p>
+
+        <Button asChild size="lg" className="animate-breathe">
+          <a href={CHECKOUT_URL} onClick={() => trackQuizEvent("quiz_oferta_click")}>
+            Quiero saber qué hacer ahora →
+          </a>
+        </Button>
+      </div>
+    );
   }
 
-  // Bloque de urgencia + cierre + botón de compra.
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-10 pb-10">
-      <ul className="flex flex-col gap-2.5 mb-6">
-        {URGENCY_BENEFITS_REMINDER.map((b) => (
-          <li key={b} className="flex items-start gap-2.5">
-            <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-            <span className="text-sm leading-relaxed">{b}</span>
-          </li>
-        ))}
-      </ul>
-
-      <Card className="mb-6 bg-muted/60">
-        <p className="text-sm leading-relaxed text-foreground/90">{PERTENENCIA_QUOTE_URGENCIA}</p>
-      </Card>
-
-      <h2 className="font-display text-xl font-extrabold mb-2 leading-snug">
-        Esta etapa no dura para siempre — y eso es justo el punto
-      </h2>
-      <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-        {displayName} va a cambiar de etapa pronto, con o sin guía. La diferencia no es si esta etapa va a pasar —
-        va a pasar de todas formas. La diferencia es si la atraviesan con claridad, o adivinando cada noche.
-      </p>
-
-      <p className="text-xs text-muted-foreground text-center mb-6">{GUARANTEE_TEXT}</p>
-
-      <Button asChild size="lg" className="animate-breathe">
-        <a href={CHECKOUT_URL} onClick={() => trackQuizEvent("quiz_oferta_click")}>
-          Quiero saber qué hacer ahora →
-        </a>
-      </Button>
-    </div>
+    <>
+      {content}
+      {floatingButtonVisible && <QuizFloatingButton onClick={jumpToOffer} />}
+      <QuizExitIntentDialog
+        open={exitIntentOpen}
+        onOpenChange={setExitIntentOpen}
+        variant={step >= RESULT_INDEX ? "garantia" : "guardar_resultado"}
+        displayName={displayName}
+        onSaveEmail={handleSaveEmail}
+        onSeeOffer={() => setStep(URGENCY_INDEX)}
+      />
+    </>
   );
 }
