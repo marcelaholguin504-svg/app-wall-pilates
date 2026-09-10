@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Moon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,6 +168,8 @@ export default function Quiz() {
   const [flashId, setFlashId] = useState<string | null>(null);
   const [exitIntentOpen, setExitIntentOpen] = useState(false);
   const [exitIntentShown, setExitIntentShown] = useState(false);
+  const [pediatraEmail, setPediatraEmail] = useState("");
+  const [pediatraEmailSaved, setPediatraEmailSaved] = useState(false);
 
   const displayName = answers.name || "tu bebé";
   const blocked = answers.alertaSeguridad !== "solo_sueno";
@@ -245,6 +247,16 @@ export default function Quiz() {
 
   function handleSaveEmail(email: string) {
     trackQuizEvent("quiz_exit_intent_email", { has_email: Boolean(email) });
+  }
+
+  // Captura de correo en la pantalla de derivación a pediatra — nunca lleva
+  // a ninguna oferta, es la única acción posible ahí y no insiste si la
+  // persona simplemente se va sin dejarlo.
+  function handlePediatraEmailSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!pediatraEmail.trim()) return;
+    trackQuizEvent("quiz_pediatra_email_capturado");
+    setPediatraEmailSaved(true);
   }
 
   // Una vez que P7 se respondió con una bandera de riesgo, el botón flotante
@@ -367,6 +379,31 @@ export default function Quiz() {
           <h1 className="font-display text-xl font-extrabold mb-3 text-destructive">{alertContent.title}</h1>
           <p className="text-foreground/80 text-sm leading-relaxed max-w-[320px] mb-2">{alertContent.body}</p>
           <p className="text-muted-foreground text-xs mt-6">Puedes cerrar esta pestaña cuando quieras.</p>
+
+          <div className="w-full max-w-[300px] mt-12 pt-8 border-t border-border/40">
+            {pediatraEmailSaved ? (
+              <p className="text-muted-foreground text-sm leading-relaxed">Listo — te escribimos más adelante.</p>
+            ) : (
+              <>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                  Cuando ya hayas resuelto esto con tu pediatra, nos encantaría ayudarte con el sueño. Déjanos tu
+                  correo y te escribimos más adelante, sin compromiso.
+                </p>
+                <form onSubmit={handlePediatraEmailSubmit} className="flex flex-col gap-3">
+                  <Input
+                    type="email"
+                    required
+                    placeholder="tucorreo@ejemplo.com"
+                    value={pediatraEmail}
+                    onChange={(e) => setPediatraEmail(e.target.value)}
+                  />
+                  <Button type="submit" variant="secondary">
+                    Avísenme más adelante
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       );
     } else {
