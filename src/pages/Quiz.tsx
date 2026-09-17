@@ -17,6 +17,7 @@ import { QuizUrgencyIllustration } from "@/components/QuizUrgencyIllustration";
 import { QuizFloatingButton } from "@/components/QuizFloatingButton";
 import { QuizExitIntentDialog } from "@/components/QuizExitIntentDialog";
 import { initMetaPixel, trackQuizEvent } from "@/services/metaPixel";
+import { captureUtmParams, getOrCreateQuizSessionId, trackFunnelCheckoutClick, trackFunnelStep } from "@/services/quizFunnelTracking";
 import { GUIDANCE_BANK } from "@/data/guidanceContent";
 import { SAFETY_ALERT_MESSAGE, FEVER_ALERT_UNDER_3_MONTHS, feverAlertOver3Months } from "@/data/safetyContent";
 import {
@@ -159,6 +160,27 @@ const P7_INDEX = FLOW.findIndex((s) => s.kind === "question" && s.question.field
 const RESULT_INDEX = FLOW.findIndex((s) => s.kind === "result");
 const URGENCY_INDEX = FLOW.findIndex((s) => s.kind === "urgency");
 
+// Identificador técnico corto de cada paso de FLOW, solo para el tracking
+// de embudo en Supabase (quizFunnelTracking.ts) — no afecta nada visual ni
+// de navegación, y no reemplaza los nombres de los 14 eventos de Meta.
+const QUESTION_STEP_IDS: Record<string, string> = {
+  edad: "p1_edad",
+  patron: "p2_patron",
+  duracion: "p3_duracion",
+  queIntento: "p4_que_intento",
+  estadoEmocional: "p5_estado_emocional",
+  situacionAhora: "p6_situacion_ahora",
+  alertaSeguridad: "p7_alerta_seguridad",
+  cuidadores: "p8_cuidadores",
+  meta: "p9_meta",
+};
+
+function stepIdForFlowStep(flowStep: FlowStep): string {
+  if (flowStep.kind === "question") return QUESTION_STEP_IDS[flowStep.question.field];
+  if (flowStep.kind === "learning") return `learning_${flowStep.block.n}`;
+  return flowStep.kind;
+}
+
 const SELECT_ADVANCE_DELAY_MS = 220;
 
 export default function Quiz() {
@@ -178,6 +200,10 @@ export default function Quiz() {
   useEffect(() => {
     initMetaPixel();
     trackQuizEvent("quiz_paso_0_validacion");
+    // Tracking de embudo en Supabase (además de Meta, no en su lugar): id de
+    // sesión anónimo por pestaña + UTM de la URL, capturados una sola vez.
+    getOrCreateQuizSessionId();
+    captureUtmParams();
   }, []);
 
   useEffect(() => {
@@ -187,6 +213,7 @@ export default function Quiz() {
     else if (item.kind === "result") trackQuizEvent(blocked ? "quiz_derivado_pediatra" : "quiz_resultado_visto");
     else if (item.kind === "benefits") trackQuizEvent("quiz_beneficios_visto");
     else if (item.kind === "urgency") trackQuizEvent("quiz_urgencia_visto");
+    trackFunnelStep(step, stepIdForFlowStep(item));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -508,7 +535,13 @@ export default function Quiz() {
         <p className="text-xs text-muted-foreground text-center mb-6">{GUARANTEE_TEXT}</p>
 
         <Button asChild size="lg" className="animate-breathe">
-          <a href={CHECKOUT_URL} onClick={() => trackQuizEvent("quiz_oferta_click")}>
+          <a
+            href={CHECKOUT_URL}
+            onClick={() => {
+              trackQuizEvent("quiz_oferta_click");
+              trackFunnelCheckoutClick();
+            }}
+          >
             Quiero saber qué hacer ahora →
           </a>
         </Button>
