@@ -314,6 +314,7 @@ export default function Quiz() {
           Dime qué hacer ahora →
         </Button>
         <p className="text-xs text-muted-foreground mt-4">(30 segundos. Sin registros. Sin apps que instalar todavía.)</p>
+        <p className="text-sm text-primary font-semibold mt-3">9 preguntas rápidas → tu plan de esta noche</p>
       </div>
     );
   } else if (current.kind === "name") {
