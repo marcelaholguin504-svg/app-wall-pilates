@@ -9,9 +9,33 @@ interface AuthContextValue {
   loading: boolean;
   session: Session | null;
   membership: AccountMember | null;
-  requestMagicLink: (email: string) => Promise<"sent" | "denied">;
+  requestMagicLink: (email: string) => Promise<RequestAccessResult>;
+  verifyOtpCode: (email: string, token: string) => Promise<VerifyCodeResult>;
   signOut: () => Promise<void>;
   refreshMembership: () => Promise<void>;
+}
+
+// Resultados específicos (no solo true/false) para poder mostrar el
+// mensaje exacto correspondiente en la pantalla de inicio de sesión —
+// nunca "Revisa tu correo" si el envío en realidad falló.
+export type RequestAccessResult = { ok: true } | { ok: false; reason: "no_account" | "rate_limited" | "network" | "unknown" };
+export type VerifyCodeResult = { ok: true } | { ok: false; reason: "invalid_or_expired" | "network" | "unknown" };
+
+function classifySendError(error: unknown): "rate_limited" | "network" | "unknown" {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return "network";
+  const status = (error as { status?: number } | null)?.status;
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  if (status === 429 || message.includes("rate limit") || message.includes("too many requests")) return "rate_limited";
+  if (error instanceof TypeError || message.includes("fetch") || message.includes("network")) return "network";
+  return "unknown";
+}
+
+function classifyVerifyError(error: unknown): "invalid_or_expired" | "network" | "unknown" {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return "network";
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  if (message.includes("expired") || message.includes("invalid") || message.includes("token")) return "invalid_or_expired";
+  if (error instanceof TypeError || message.includes("fetch") || message.includes("network")) return "network";
+  return "unknown";
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -108,19 +132,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function requestMagicLink(email: string): Promise<"sent" | "denied"> {
+  async function requestMagicLink(email: string): Promise<RequestAccessResult> {
     trackEvent("login_solicitado");
     const cleanEmail = email.toLowerCase().trim();
-    const eligible = await isEmailActiveMember(cleanEmail);
-    if (!eligible) {
-      trackEvent("login_denegado");
-      return "denied";
+    try {
+      const eligible = await isEmailActiveMember(cleanEmail);
+      if (!eligible) {
+        trackEvent("login_denegado");
+        return { ok: false, reason: "no_account" };
+      }
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: { shouldCreateUser: false },
+      });
+      if (error) return { ok: false, reason: classifySendError(error) };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, reason: classifySendError(err) };
     }
-    await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: { shouldCreateUser: false },
-    });
-    return "sent";
+  }
+
+  // Valida el código de 6 dígitos que llega en el mismo correo del enlace
+  // mágico. Una cuenta que todavía no confirmó su correo (su primer inicio
+  // de sesión) recibe el correo de "confirmar registro", cuyo código se
+  // valida con type "signup" — no "email" (enlace mágico normal). Como el
+  // cliente no puede saber de antemano cuál de los dos aplica, se intenta
+  // con "email" primero y, solo si falla, se reintenta con "signup" antes
+  // de mostrar cualquier error.
+  async function verifyOtpCode(email: string, token: string): Promise<VerifyCodeResult> {
+    const cleanEmail = email.toLowerCase().trim();
+    try {
+      let { error } = await supabase.auth.verifyOtp({ email: cleanEmail, token, type: "email" });
+      if (error) {
+        const retry = await supabase.auth.verifyOtp({ email: cleanEmail, token, type: "signup" });
+        error = retry.error;
+      }
+      if (error) return { ok: false, reason: classifyVerifyError(error) };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, reason: classifyVerifyError(err) };
+    }
   }
 
   async function signOut() {
@@ -135,7 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ loading, session, membership, requestMagicLink, signOut, refreshMembership }}>
+    <AuthContext.Provider
+      value={{ loading, session, membership, requestMagicLink, verifyOtpCode, signOut, refreshMembership }}
+    >
       {children}
     </AuthContext.Provider>
   );
