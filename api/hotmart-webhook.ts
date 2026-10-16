@@ -99,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: account, error: accountError } = await admin
     .from("accounts")
-    .insert({ hotmart_purchase_id: info.purchaseId, plan_start_at: new Date().toISOString() })
+    .insert({ hotmart_purchase_id: info.purchaseId })
     .select("id")
     .single();
 
@@ -107,6 +107,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("[hotmart-webhook] error creando la cuenta", accountError);
     res.status(500).json({ error: "No se pudo crear la cuenta" });
     return;
+  }
+
+  // Aparte del insert principal, y a propósito: si esto falla (por ejemplo,
+  // porque la migración del Plan de 14 noches todavía no se aplicó y la
+  // columna no existe), la cuenta, la membresía y el enlace de acceso de
+  // la compradora NO deben verse afectados. En el peor caso, esa cuenta
+  // simplemente no entra al Plan de 14 noches hasta corregirlo a mano.
+  const { error: planStartError } = await admin
+    .from("accounts")
+    .update({ plan_start_at: new Date().toISOString() })
+    .eq("id", account.id);
+
+  if (planStartError) {
+    console.error("[hotmart-webhook] la cuenta se creó pero no se pudo guardar plan_start_at", planStartError);
   }
 
   const { error: memberError } = await admin.from("account_members").insert({
