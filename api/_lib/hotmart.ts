@@ -59,13 +59,24 @@ export interface PurchaseInfo {
   email: string;
   purchaseId: string;
   isApproved: boolean;
+  isRefundOrChargeback: boolean;
 }
 
+// Nombres de evento/estado de reembolso y contracargo de Hotmart. Al igual
+// que con la aprobación, Hotmart ha usado distintos formatos con el tiempo
+// y esto no se puede probar contra un webhook real desde este entorno —
+// verifícalo enviando una "Notificación de prueba" de reembolso desde el
+// panel de Hotmart si tienes forma de generar una, y revisando los logs de
+// esta función en Vercel.
+const REFUND_OR_CHARGEBACK_EVENTS = new Set(["PURCHASE_REFUNDED", "PURCHASE_CHARGEBACK", "PURCHASE_PROTEST"]);
+const REFUND_OR_CHARGEBACK_STATUSES = new Set(["REFUNDED", "CHARGEBACK"]);
+
 /**
- * Extrae correo del comprador, id de la compra, y si el evento es una
- * compra aprobada, probando varias formas de payload conocidas de Hotmart.
- * Devuelve null si no logra identificar los datos mínimos con confianza:
- * en ese caso el webhook NO debe crear nada (fail closed).
+ * Extrae correo del comprador, id de la compra, si el evento es una compra
+ * aprobada, y si es un reembolso/contracargo, probando varias formas de
+ * payload conocidas de Hotmart. Devuelve null si no logra identificar los
+ * datos mínimos con confianza: en ese caso el webhook NO debe crear ni
+ * modificar nada (fail closed).
  */
 export function extractPurchaseInfo(payload: unknown): PurchaseInfo | null {
   if (!payload || typeof payload !== "object") return null;
@@ -91,6 +102,10 @@ export function extractPurchaseInfo(payload: unknown): PurchaseInfo | null {
   const isApproved =
     event === "PURCHASE_APPROVED" || event === "PURCHASE_COMPLETE" || status === "APPROVED" || status === "COMPLETE";
 
+  const isRefundOrChargeback =
+    (event !== undefined && REFUND_OR_CHARGEBACK_EVENTS.has(event)) ||
+    (status !== undefined && REFUND_OR_CHARGEBACK_STATUSES.has(status));
+
   const buyer = (data.buyer && typeof data.buyer === "object" ? data.buyer : purchase.buyer) as
     | Record<string, unknown>
     | undefined;
@@ -109,5 +124,10 @@ export function extractPurchaseInfo(payload: unknown): PurchaseInfo | null {
 
   if (!email || !purchaseId) return null;
 
-  return { email: String(email).toLowerCase().trim(), purchaseId: String(purchaseId), isApproved };
+  return {
+    email: String(email).toLowerCase().trim(),
+    purchaseId: String(purchaseId),
+    isApproved,
+    isRefundOrChargeback,
+  };
 }

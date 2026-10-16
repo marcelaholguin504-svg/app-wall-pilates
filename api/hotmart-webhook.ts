@@ -45,8 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  if (!info.isApproved) {
-    res.status(200).json({ ok: true, skipped: "evento_no_es_compra_aprobada" });
+  if (!info.isApproved && !info.isRefundOrChargeback) {
+    res.status(200).json({ ok: true, skipped: "evento_no_relevante" });
     return;
   }
 
@@ -73,6 +73,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  if (info.isRefundOrChargeback) {
+    if (!existingAccount) {
+      // No había cuenta que marcar (la compra nunca llegó a aprobarse aquí).
+      res.status(200).json({ ok: true, skipped: "reembolso_sin_cuenta_asociada" });
+      return;
+    }
+    const { error: unsubscribeError } = await admin
+      .from("accounts")
+      .update({ plan_unsubscribed: true })
+      .eq("id", existingAccount.id);
+    if (unsubscribeError) {
+      console.error("[hotmart-webhook] error marcando plan_unsubscribed por reembolso/contracargo", unsubscribeError);
+      res.status(500).json({ error: "Error interno" });
+      return;
+    }
+    res.status(200).json({ ok: true, accountId: existingAccount.id, planUnsubscribed: true });
+    return;
+  }
+
   if (existingAccount) {
     res.status(200).json({ ok: true, skipped: "compra_ya_procesada" });
     return;
@@ -88,6 +107,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("[hotmart-webhook] error creando la cuenta", accountError);
     res.status(500).json({ error: "No se pudo crear la cuenta" });
     return;
+  }
+
+  // Aparte del insert principal, y a propósito: si esto falla (por ejemplo,
+  // porque la migración del Plan de 14 noches todavía no se aplicó y la
+  // columna no existe), la cuenta, la membresía y el enlace de acceso de
+  // la compradora NO deben verse afectados. En el peor caso, esa cuenta
+  // simplemente no entra al Plan de 14 noches hasta corregirlo a mano.
+  const { error: planStartError } = await admin
+    .from("accounts")
+    .update({ plan_start_at: new Date().toISOString() })
+    .eq("id", account.id);
+
+  if (planStartError) {
+    console.error("[hotmart-webhook] la cuenta se creó pero no se pudo guardar plan_start_at", planStartError);
   }
 
   const { error: memberError } = await admin.from("account_members").insert({
