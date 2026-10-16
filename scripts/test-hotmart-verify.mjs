@@ -78,5 +78,29 @@ check("devuelve null si falta el email", extractPurchaseInfo({ data: { purchase:
 check("devuelve null con payload vacío", extractPurchaseInfo({}) === null);
 check("devuelve null con payload no-objeto", extractPurchaseInfo("no soy un objeto") === null);
 
+check("una compra aprobada no se marca como reembolso/contracargo", infoV2?.isRefundOrChargeback === false);
+check(
+  "una compra cancelada (no reembolso) tampoco se marca como reembolso/contracargo",
+  extractPurchaseInfo(canceledPayload)?.isRefundOrChargeback === false
+);
+
+// --- Reembolsos y contracargos ---
+const refundPayload = {
+  event: "PURCHASE_REFUNDED",
+  data: { purchase: { transaction: "HP12345678", status: "REFUNDED" }, buyer: { email: "compradora@ejemplo.com" } },
+};
+const refundInfo = extractPurchaseInfo(refundPayload);
+check("marca isRefundOrChargeback=true para PURCHASE_REFUNDED", refundInfo?.isRefundOrChargeback === true);
+check("un reembolso no se marca como aprobado", refundInfo?.isApproved === false);
+check("un reembolso conserva el mismo id de compra", refundInfo?.purchaseId === "HP12345678");
+
+const chargebackPayload = {
+  data: { purchase: { transaction: "HP999999", status: "CHARGEBACK" }, buyer: { email: "alguien@ejemplo.com" } },
+};
+check(
+  "marca isRefundOrChargeback=true para status CHARGEBACK (sin campo event)",
+  extractPurchaseInfo(chargebackPayload)?.isRefundOrChargeback === true
+);
+
 console.log("\n" + (failures === 0 ? `Todo bien: 0 fallos.` : `${failures} prueba(s) fallaron.`));
 process.exit(failures === 0 ? 0 : 1);

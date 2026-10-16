@@ -45,8 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  if (!info.isApproved) {
-    res.status(200).json({ ok: true, skipped: "evento_no_es_compra_aprobada" });
+  if (!info.isApproved && !info.isRefundOrChargeback) {
+    res.status(200).json({ ok: true, skipped: "evento_no_relevante" });
     return;
   }
 
@@ -73,6 +73,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  if (info.isRefundOrChargeback) {
+    if (!existingAccount) {
+      // No había cuenta que marcar (la compra nunca llegó a aprobarse aquí).
+      res.status(200).json({ ok: true, skipped: "reembolso_sin_cuenta_asociada" });
+      return;
+    }
+    const { error: unsubscribeError } = await admin
+      .from("accounts")
+      .update({ plan_unsubscribed: true })
+      .eq("id", existingAccount.id);
+    if (unsubscribeError) {
+      console.error("[hotmart-webhook] error marcando plan_unsubscribed por reembolso/contracargo", unsubscribeError);
+      res.status(500).json({ error: "Error interno" });
+      return;
+    }
+    res.status(200).json({ ok: true, accountId: existingAccount.id, planUnsubscribed: true });
+    return;
+  }
+
   if (existingAccount) {
     res.status(200).json({ ok: true, skipped: "compra_ya_procesada" });
     return;
@@ -80,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: account, error: accountError } = await admin
     .from("accounts")
-    .insert({ hotmart_purchase_id: info.purchaseId })
+    .insert({ hotmart_purchase_id: info.purchaseId, plan_start_at: new Date().toISOString() })
     .select("id")
     .single();
 
